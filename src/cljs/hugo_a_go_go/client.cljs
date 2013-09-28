@@ -26,6 +26,7 @@
      (fn [] (vec (take size
                        (repeatedly
                         (fn [] (rand-nth [:black :white nil]))))))))))
+
 (def initial-state
   {:board (random-board 9)
    :to-move :black})
@@ -50,32 +51,61 @@
 
 (def two-pi (* 2 (.-PI js/Math)))
 
-(defn draw-circle [x y colour]
-  (set! (.-fillStyle @context) colour)
+(defn draw-circle [x y radius colour]
   (.beginPath @context)
-  (.arc @context x y stone-radius 0 two-pi)
+  (set! (.-fillStyle @context) colour)
+  (set! (.-strokeStyle @context) black)
+  (set! (.-lineWidth @context) 1)
+
+  (.arc @context x y radius 0 two-pi)
   (.closePath @context)
-  (.fill @context))
+  (.fill @context)
+  (.stroke @context))
+
+(defn draw-dots []
+  (doseq [y (range game-size)
+          x (range game-size)]
+    (draw-circle (+ (* x stone-width) stone-radius padding)
+                 (+ (* y stone-width) stone-radius padding)
+                 5
+                 black)))
+
+(defn draw-lines []
+  (doseq [x (range game-size)]
+    (let [x-start (+ (* x stone-width) stone-radius padding)
+          x-end x-start
+          y-start (+ stone-radius padding)
+          y-end (+ (* (dec game-size) stone-width) stone-radius padding)]
+      (.beginPath @context)
+      (.moveTo @context x-start y-start)
+      (.lineTo @context x-end y-end)
+      (.stroke @context)
+
+      (.beginPath @context)
+      (.moveTo @context y-start x-start)
+      (.lineTo @context y-end x-end)
+      (.stroke @context)
+
+      )))
 
 (defn draw-pos [board y x]
   (if-let [colour (get-pos board y x)]
     (draw-circle (+ (* x stone-width) stone-radius padding)
                  (+ (* y stone-width) stone-radius padding)
+                 stone-radius
                  (if (= colour :black) black white))))
 
 (defn blank-board []
   (set! (.-fillStyle @context) background)
   (.fillRect @context 0 0 width height))
 
-;; (defnefn draw-pos [board [y x :as pos]]
-
-
 (defn display [{:keys [board] :as state}]
   (blank-board)
-  (let [size (count board)]
-    (doseq [y (range size)
-            x (range size)]
-      )))
+  (draw-lines)
+  (draw-dots)
+  (doseq [y (range game-size)
+          x (range game-size)]
+      (draw-pos board y x)))
 
 (defn ^:export init []
   (let [board (.getElementById js/document "board")
@@ -84,10 +114,5 @@
         height (.-height board)
         ]
     (reset! context board-context)
-    (blank-board)
-    ;; (draw-circle 200 100 black)
-    (log (clj->js (:board initial-state)))
-    (doseq [y (range game-size)
-            x (range game-size)]
-      (draw-pos (:board initial-state) y x)
-      )))
+    (display initial-state)
+    ))
