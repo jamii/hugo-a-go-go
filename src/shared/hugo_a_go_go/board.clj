@@ -86,16 +86,20 @@
 
 (defn suicide? [^Board board colour pos]
   (let [strings (object-array 4)
-        liberties (count 0)]
+        liberties (atom 0)
+        string-i (atom 0)]
     (foreach-neighbour neighbour-pos pos
-                       (aset strings (aget (.strings board) neighbour-pos)))
+                       (aset strings @string-i (aget (.strings board) neighbour-pos))
+                       (swap! string-i inc))
     (dotimes [i 4]
       (let [string (aget strings i)]
         (when (= colour (get-string-colour string))
-          (swap! liberties + (get-string-liberties string))
+          (swap! liberties + (dec (get-string-liberties string)))
           (dotimes [j i]
             (when (identical? (aget strings i) (aget strings j))
-              (swap! liberties - (inc (get-string-liberties string))))))))
+              (swap! liberties - (get-string-liberties string)))))
+        (when (= empty (get-string-colour string))
+          (swap! liberties inc))))
     (= 0 @liberties)))
 
 (defn set-colour [^Board board pos colour]
@@ -134,7 +138,9 @@
     (dotimes [y size]
       (dotimes [x size]
         (clojure.core/print
-         (str (colour->string (get-colour board (->pos x y)))
+         (str (if (and (= empty (get-colour board (->pos x y))) (suicide? board black (->pos x y)))
+                "X"
+                (colour->string (get-colour board (->pos x y))))
               (string->id (aget (.strings board) (->pos x y)))
               (get-string-liberties (aget (.strings board) (->pos x y)))
               " ")))
@@ -150,8 +156,8 @@
     board))
 
 (prn "---------------------------------")
-(debug->board [["O" "+" "#" "O"]
-               ["O" "+" "O" "O"]
+(debug->board [["O" "#" "#" "O"]
+               ["+" "+" "O" "O"]
                ["O" "O" "O" "#"]])
 
 (comment
