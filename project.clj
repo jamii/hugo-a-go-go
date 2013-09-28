@@ -8,16 +8,16 @@
   :plugins [[lein-cljsbuild "0.3.3"]
             [lein-ring "0.8.7"]]
   :hooks [leiningen.cljsbuild]
-  :source-paths ["src/clj"]
+  :source-paths ["src/clj" "src/shared"]
   :cljsbuild {:builds {:dev
-                       {:source-paths ["src/brepl" "src/cljs"]
+                       {:source-paths ["src/brepl" "src/cljs" "src/shared"]
                         :compiler {:output-to "resources/public/js/dev.js"
                                    :optimizations :simple
                                    :pretty-print true
                                    :static-fns true}}
 
                        :prod
-                       {:source-paths ["src/cljs"]
+                       {:source-paths ["src/cljs" "src/shared"]
                         :compiler {
                                    ;; :output-to "prod.js"
                                    ;; :output-dir "resources/public/js/"
