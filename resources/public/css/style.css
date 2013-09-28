@@ -29,7 +29,8 @@ canvas {
   box-shadow: 0px 0px 20px #a39b9e;
   -moz-box-shadow: 0px 0px 20px #a39b9e;
   -webkit-box-shadow: 0px 0px 20px #a39b9e;
-  /* margin-top: 50px;  */
+  margin-top: 50px;
+  margin-bottom: 50px;
 }
 
 #stats{
@@ -39,14 +40,4 @@ canvas {
 #stats span{
     font-weight: bold;
     margin:0 60px 0 5px;
-}
-  
-#fittest-dna{
-  color:#999;
-  margin-bottom:20px;
-  font-style:italic;
-  font-size:1em;
-  width: 300px;
-  word-break: break-all;
-  margin: 0 auto;
 }

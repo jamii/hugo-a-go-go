@@ -8,21 +8,22 @@
             [clojure.string :as string])
   (:gen-class))
 
+(defn page-for-env [env]
+  (html [:head {:title "test"}
+         [:link {:rel "stylesheet" :href "css/style.css"}]
+         [:script {:src (str "js/" env ".js")}]
+         ]
+        [:body
+         {:onload "hugo_a_go_go.client.init()"}
+         [:p]
+         [:div [:canvas#board {:width "600" :height "600"}]]
+         ]))
+
 (defroutes site-routes
   (GET "/" []
-       (html [:head {:title "test"}
-              [:link {:rel "stylesheet" :href "css/style.css"}]
-              [:script {:src "js/prod.js"}]]
-             [:body
-              {:onload "hugo_a_go_go.client.init()"}
-              ]))
+       (page-for-env "prod"))
   (GET "/dev" []
-       (html [:head {:title "test"}
-              [:link {:rel "stylesheet" :href "css/style.css"}]
-              [:script {:src "js/dev.js"}]]
-             [:body
-              {:onload "hugo_a_go_go.client.init()"}
-              ]))
+       (page-for-env "dev"))
   (route/resources "/")
   (route/not-found "Page not found"))
 
