@@ -1,9 +1,7 @@
 (ns hugo-a-go-go.board)
 
-;; empty string
-;; strings (including empty string)
-;; string pointer (byte, cyclic)
-;; string has empty/black/white
+;; ....don't judge me.
+;; This was written in a terrible rush
 
 (defmacro defenum [syms]
   `(do ~@(for [[sym i] (zipmap syms (range))]
@@ -158,7 +156,11 @@
 (prn "---------------------------------")
 (debug->board [["O" "#" "#" "O"]
                ["+" "+" "O" "O"]
-               ["O" "O" "O" "#"]])
+               ["O" "O" "O" "#"]
+               ["#" "#" "O" "+"]
+               ["#" "+" "O" "+"]
+               ["O" "#" "#" "O"]
+               ["O" "O" "O" "O"]])
 
 (comment
   (def board (hugo-a-go-go.board/new))
