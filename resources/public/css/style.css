@@ -1,0 +1,52 @@
+html, body {
+  height: 100%;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  background: #efeced;
+  color: #666;
+  font-family: 'Helvetica', 'Arial', sans-serif;
+  text-align:center;
+}
+
+.docs {
+  margin-left: 10px;
+  color: #777777;
+  font-size: 16px;
+  text-decoration: none;
+  font-weight: normal;
+  /* font-style: italic; */
+  position: absolute;
+  display: block;
+  text-align: center;
+  top: 680px;
+  width: 150px;
+  left: 50%;
+  margin-left: -75px;
+}
+
+canvas {
+  box-shadow: 0px 0px 20px #a39b9e;
+  -moz-box-shadow: 0px 0px 20px #a39b9e;
+  -webkit-box-shadow: 0px 0px 20px #a39b9e;
+  /* margin-top: 50px;  */
+}
+
+#stats{
+  margin:10px 0 10px 60px;
+}
+
+#stats span{
+    font-weight: bold;
+    margin:0 60px 0 5px;
+}
+  
+#fittest-dna{
+  color:#999;
+  margin-bottom:20px;
+  font-style:italic;
+  font-size:1em;
+  width: 300px;
+  word-break: break-all;
+  margin: 0 auto;
+}
