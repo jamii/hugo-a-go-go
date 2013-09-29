@@ -7,9 +7,17 @@
 
 (defrecord Node [parent colour pos count sum nodes valids])
 
-(defn value [board colour]
+#_(defn value [board colour]
   (let [score (board/score board)]
     (- (score colour) (score (board/opposite-colour colour)))))
+
+;; rough approximation of the final score if the board is tightly packed
+(defn value [board colour]
+  (let [score (atom 0)]
+    (dotimes [pos board/max-pos]
+      (when (keyword-identical? colour (board/get-colour board pos))
+        (swap! score inc)))
+    @score))
 
 ;; TODO should track this incrementally in the board
 (defn valids [board colour]

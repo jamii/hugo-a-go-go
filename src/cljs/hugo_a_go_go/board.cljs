@@ -74,11 +74,11 @@
 (defn suicide? [^Board board colour pos]
   (let [suicide (atom true)
         opposite-colour (condp keyword-identical? colour :black :white :white :black)]
-    (dotimes [i 4]
-      (let [string (aget (.-strings board) (neighbour pos i))]
+    (foreach-neighbour neighbour-pos pos
+      (let [string (aget (.-strings board) neighbour-pos)]
         (set! (.-liberties string) (dec (.-liberties string)))))
-    (dotimes [i 4]
-      (let [string (aget (.-strings board) (neighbour pos i))]
+    (foreach-neighbour neighbour-pos pos
+      (let [string (aget (.-strings board) neighbour-pos)]
         (condp keyword-identical? (.-colour string)
           colour (when (> (.-liberties string) 0)
                    (reset! suicide false))
@@ -86,16 +86,17 @@
                             (reset! suicide false))
           :empty (reset! suicide false)
           :grey nil)))
-    (dotimes [i 4]
-      (let [string (aget (.-strings board) (neighbour pos i))]
+    (foreach-neighbour neighbour-pos pos
+      (let [string (aget (.-strings board) neighbour-pos)]
         (set! (.-liberties string) (inc (.-liberties string)))))
     @suicide))
 
 (defn eyelike? [^Board board colour pos]
-  (and (keyword-identical? colour (get-colour board (neighbour pos 0)))
-       (keyword-identical? colour (get-colour board (neighbour pos 1)))
-       (keyword-identical? colour (get-colour board (neighbour pos 2)))
-       (keyword-identical? colour (get-colour board (neighbour pos 3)))))
+  (let [eyelike? (atom true)]
+    (foreach-neighbour neighbour-pos pos
+                       (when (not (keyword-identical? colour (get-colour board neighbour-pos)))
+                         (reset! eyelike? false)))
+    @eyelike?))
 
 (defn valid? [^Board board colour pos]
   (and (keyword-identical? :empty (get-colour board pos))
@@ -137,12 +138,11 @@
 (defn flood-fill [board colour]
   (let [filled (object-array max-pos)]
     (letfn [(flood-fill-around [pos]
-              (dotimes [i 4]
-                (let [pos (neighbour pos i)]
+              (foreach-neighbour pos pos
                   (when (and (not (aget filled pos))
                              (keyword-identical? :empty (get-colour board pos)))
                     (aset filled pos true)
-                    (flood-fill-around pos)))))]
+                    (flood-fill-around pos))))]
       (dotimes [x size]
         (dotimes [y size]
           (let [pos (->pos x y)]
