@@ -11,7 +11,7 @@
 
 (def state (atom hugo-a-go-go.client.initial-state))
 
-(defn handle [e]
+(defn ^:export handle [e]
   (let [move (click-to-move e)]
     (log "clicked")
     (log move)
