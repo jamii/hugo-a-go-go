@@ -23,3 +23,12 @@
 
 (defn random-board [n]
   (with-random-moves (board/new) n :black))
+
+;; massive speedup at the expense of never playing in killed spaces
+(defn with-random-moves-from [board n starting-colour moves]
+  (js/goog.array.shuffle moves)
+  (loop [colour starting-colour]
+    (if-let [move (.pop moves)]
+      (board/set-colour board move colour)
+      (recur (board/opposite-colour colour))))
+  board)
