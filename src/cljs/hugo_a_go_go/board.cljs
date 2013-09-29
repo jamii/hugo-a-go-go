@@ -115,6 +115,15 @@
                              (when (= 0 (.-liberties neighbour-string))
                                (clear-string board neighbour-string neighbour-colour neighbour-pos))))))))
 
+;; TODO this is a really dumb solution
+(defn copy [board]
+  (let [new-board (hugo-a-go-go.board/new)]
+    (dotimes [i max-pos]
+      (let [colour (get-colour board pos)]
+        (when (#{:black :white} colour)
+          (set-colour new-board pos colour))))
+    new-board))
+
 (defn flood-fill [board colour]
   (let [filled (object-array max-pos)]
     (letfn [(flood-fill-around [pos]
