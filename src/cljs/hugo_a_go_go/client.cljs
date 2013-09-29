@@ -1,5 +1,6 @@
 (ns hugo-a-go-go.client
-  (:require [hugo-a-go-go.board :as board]))
+  (:require [hugo-a-go-go.board :as board]
+            [hugo-a-go-go.random :as random]))
 
 (def line "#000")
 (def background "ffff99")
@@ -25,7 +26,7 @@
                        ["O" "O" "O" "O" "+" "+" "+" "+" "+"]]))
 
 (def initial-state
-  {:board debug-board
+  {:board (random/random-board 100)
    :to-move :black})
 
 (defn make-move [{:keys [board to-move] :as state}
