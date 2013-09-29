@@ -109,7 +109,7 @@
       (draw-text "X" (- centre-x 20) (+ centre-y 20) black))))
 
 (defn draw-score [board]
-  (draw-text (board/score board) padding (- height padding)))
+  (draw-text (board/score board) padding height black))
 
 (defn blank-board []
   (set! (.-fillStyle @context) background)
@@ -128,8 +128,7 @@
   (let [board (.getElementById js/document "board")
         board-context (.getContext board "2d")
         width (.-width board)
-        height (.-height board)
-        ]
+        height (.-height board)]
     (reset! context board-context)
     (display initial-state)
     ))
