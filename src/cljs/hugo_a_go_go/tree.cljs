@@ -20,7 +20,7 @@
     valids))
 
 (defn new [board colour]
-  (->Node nil colour 0 0 0 (object-array 0) (valids board (board/opposite-colour colour))))
+  (->Node nil (board/opposite-colour colour) 0 0 0 (object-array 0) (valids board colour)))
 
 (defn uproot [node]
   (set! (.-parent node) nil)
@@ -68,6 +68,5 @@
   (let [node (hugo-a-go-go.tree/new (board/copy board) colour)]
     (dotimes [_ n]
       (expand (board/copy board) node))
-    (js/console.log "result" node)
     (when-let [child (best-child node)]
       (.-pos child))))
