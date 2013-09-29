@@ -22,7 +22,7 @@
           y (dec (quot ai-move board/array-size))]
       (log [x y])
       (reset! state (make-move @state [x y]))
-      (hugo-a-go-go/display @state)
+      (hugo-a-go-go.client/display @state)
       )
     ))
 
