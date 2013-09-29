@@ -108,6 +108,9 @@
     (when (and (= :empty colour) (board/suicide? board :black (board/->pos x y)))
       (draw-text "X" (- centre-x 20) (+ centre-y 20) black))))
 
+(defn draw-score [board]
+  (draw-text (board/score board) padding (- height padding)))
+
 (defn blank-board []
   (set! (.-fillStyle @context) background)
   (.fillRect @context 0 0 width height))
@@ -118,7 +121,8 @@
   (draw-dots)
   (doseq [x (range board/size)
           y (range board/size)]
-      (draw-pos board x y)))
+    (draw-pos board x y))
+  (draw-score board))
 
 (defn ^:export init []
   (let [board (.getElementById js/document "board")

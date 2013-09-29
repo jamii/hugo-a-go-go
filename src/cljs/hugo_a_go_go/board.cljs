@@ -4,7 +4,7 @@
 ;; ....don't judge me.
 ;; This was written in a terrible rush
 
-;; TODO death, scoring, cleanup, suicide on kill
+;; TODO scoring, cleanup
 
 (defrecord String [colour origin size liberties])
 (defrecord Board [strings empty-string])
@@ -87,7 +87,6 @@
     @suicide))
 
 (defn set-colour [^Board board pos colour]
-  (assert (= :empty (get-colour board pos)))
   (let [string (->String colour pos 1 0)]
     (aset (.-strings board) pos string)
     (foreach-neighbour neighbour-pos pos
@@ -110,6 +109,32 @@
                              (set! (.-liberties neighbour-string) (dec (.-liberties neighbour-string)))
                              (when (= 0 (.-liberties neighbour-string))
                                (clear-string board neighbour-string neighbour-colour neighbour-pos))))))))
+
+(defn flood-fill [board colour]
+  (let [filled (object-array max-pos)]
+    (letfn [(flood-fill-around [pos]
+              (dotimes [i 4]
+                (let [pos (neighbour pos i)]
+                  (when (and (not (aget filled pos))
+                             (keyword-identical? :empty (get-colour board pos)))
+                    (aset filled pos true)
+                    (flood-fill-around pos)))))]
+      (dotimes [x size]
+        (dotimes [y size]
+          (let [pos (->pos x y)]
+            (when (keyword-identical? colour (get-colour board pos))
+              (aset filled pos true)
+              (flood-fill-around pos))))))
+    (count (filter identity filled))))
+
+(defn score [board]
+  (let [white-flood (flood-fill board :white)
+        black-flood (flood-fill board :black)
+        total (* size size)
+        overlap (- (+ white-flood black-flood) total)
+        white-score (- white-flood overlap)
+        black-score (- black-flood overlap)]
+    {:white white-score :black black-score}))
 
 (defn colour->string [colour]
   (case colour
