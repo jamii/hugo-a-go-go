@@ -94,16 +94,19 @@
       (.stroke @context))))
 
 (defn draw-pos [board x y]
-  (let [colour (get-pos board x y)]
+  (let [colour (get-pos board x y)
+        centre-x (+ (* x stone-width) stone-radius padding)
+        centre-y (+ (* y stone-width) stone-radius padding)]
     (when (#{:black :white} colour)
-      (draw-circle (+ (* x stone-width) stone-radius padding)
-                   (+ (* y stone-width) stone-radius padding)
-                   stone-radius
+      (draw-circle centre-x centre-y stone-radius
                    (if (= colour :black) black white))
       (draw-text (str (board/get-liberties board (board/->pos x y)))
-                 (+ (* x stone-width) stone-radius padding)
-                 (+ (* y stone-width) stone-radius padding)
-                 (if (= colour :black) white black)))))
+                 centre-x centre-y
+                 (if (= colour :black) white black)))
+    (when (and (= :empty colour) (board/suicide? board :white (board/->pos x y)))
+      (draw-text "X" centre-x centre-y white))
+    (when (and (= :empty colour) (board/suicide? board :black (board/->pos x y)))
+      (draw-text "X" (- centre-x 20) (+ centre-y 20) black))))
 
 (defn blank-board []
   (set! (.-fillStyle @context) background)
