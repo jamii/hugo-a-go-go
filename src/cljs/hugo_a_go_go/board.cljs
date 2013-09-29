@@ -4,7 +4,7 @@
 ;; ....don't judge me.
 ;; This was written in a terrible rush
 
-;; TODO death, scoring, cleanup, cljs, graphical
+;; TODO death, scoring, cleanup, suicide on kill
 
 (defrecord String [colour origin size liberties])
 (defrecord Board [strings empty-string])
@@ -35,7 +35,7 @@
                      (let [neighbour-string (aget (.-strings board) neighbour-pos)]
                        (if (identical? string neighbour-string)
                          (clear-string board neighbour-string neighbour-pos)
-                         (set! (.-liberties neighbour-string) (dec (.-liberties neighbour-string)))))))
+                         (set! (.-liberties neighbour-string) (inc (.-liberties neighbour-string)))))))
 
 (defn re-string [^Board board from-string to-string pos]
   (when (identical? (aget (.-strings board) pos) from-string)
@@ -84,15 +84,23 @@
     (foreach-neighbour neighbour-pos pos
                        (let [neighbour-string (aget (.-strings board) neighbour-pos)
                              neighbour-colour (.-colour neighbour-string)]
-                         (case neighbour-colour
-                                    :empty (set! (.-liberties (aget (.-strings board) pos)) (inc (.-liberties (aget (.-strings board) pos))))
-                                    :grey nil
-                                    (do
-                                      (set! (.-liberties neighbour-string) (dec (.-liberties neighbour-string)))
-                                      (when (= colour neighbour-colour)
-                                        (join-strings board (aget (.-strings board) pos) neighbour-string pos neighbour-pos))))))
-    ;; TODO check for death
-    ))
+                         (condp keyword-identical? neighbour-colour
+                           :empty
+                           (set! (.-liberties (aget (.-strings board) pos)) (inc (.-liberties (aget (.-strings board) pos))))
+
+                           :grey
+                           nil
+
+                           colour
+                           (do
+                             (set! (.-liberties neighbour-string) (dec (.-liberties neighbour-string)))
+                             (join-strings board (aget (.-strings board) pos) neighbour-string pos neighbour-pos))
+
+                           ;; opposite colour
+                           (do
+                             (set! (.-liberties neighbour-string) (dec (.-liberties neighbour-string)))
+                             (when (= 0 (.-liberties neighbour-string))
+                               (clear-string board neighbour-string neighbour-colour neighbour-pos))))))))
 
 (defn colour->string [colour]
   (case colour
