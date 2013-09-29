@@ -14,9 +14,9 @@
 (def padding stone-radius)
 
 (def context (atom nil))
-(def board (atom nil))
+(def board-ref (atom nil))
 (defn log [message]
-  (.log js/console message))
+  (.log js/console (clj->js message)))
 
 (defn debug-board []
   (board/debug->board [["O" "#" "#" "O" "+" "+" "O" "#" "+"]
@@ -188,6 +188,6 @@
   (let [board-element (.getElementById js/document "board")
         board-context (.getContext board-element "2d")]
     (reset! context board-context)
-    (reset! board board-element)
+    (reset! board-ref board-element)
     (display initial-state)
     ))
