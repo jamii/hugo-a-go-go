@@ -36,5 +36,5 @@
 
 (defn play-random-game []
   (go (loop []
-        (log "looping")
+        (log (<! input-chan))
         (recur))))
