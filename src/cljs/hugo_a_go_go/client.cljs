@@ -136,5 +136,5 @@
     #_(js/console.log (with-out-str (time (dotimes [i 1000] (random/random-board 100)))))
     (let [tree (tree/new)]
       (dotimes [_ 1]
-        (tree/expand- (debug-board) tree))
+        (tree/expand (debug-board) tree))
       (js/console.log (tree/best-child tree)))))

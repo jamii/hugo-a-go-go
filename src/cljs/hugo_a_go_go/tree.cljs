@@ -1,4 +1,6 @@
-(ns hugo-a-go-go.tree)
+(ns hugo-a-go-go.tree
+  (:require [hugo-a-go-go.board :as board]
+            [hugo-a-go-go.random :as random]))
 
 ;; TODO value and min/max is probably wrong
 
@@ -11,13 +13,13 @@
 ;; TODO should track this incrementally in the board
 (defn empties [board]
   (let [empties (object-array 0)]
-    (dotimes [pos (board/max-pos)]
+    (dotimes [pos board/max-pos]
       (when (keyword-identical? :empty (board/get-colour board pos))
         (.push empties pos)))
     empties))
 
 (defn new []
-  (->Node nil :black 0 0 0 [] (empties (board/new))))
+  (->Node nil :black 0 0 0 (object-array 0) (empties (board/new))))
 
 (defn add-value [node value]
   (set! (.-count node) (+ (.-count node) 1))
@@ -31,16 +33,16 @@
     (random/with-random-moves board 100 (board/opposite-colour colour))
     (let [value (value board colour)]
       (add-value parent value)
-      (->Node parent colour pos 1 value [] empties))))
+      (->Node parent colour pos 1 value (object-array 0) empties))))
 
 (defn best-child [node]
   (let [best-score (atom (- (/ 1 0)))
         best-child (atom nil)]
     (doseq [child (.-nodes node)]
-      (let [score (+ (/ (.sum child) (.count child))
+      (let [score (+ (/ (.-sum child) (.-count child))
                      (js/Math.sqrt
-                      (/ (* 2 (js/Math.log (.count node)))
-                         (* 5 (.count child)))))]
+                      (/ (* 2 (js/Math.log (.-count node)))
+                         (* 5 (.-count child)))))]
         (if (> score @best-score)
           (reset! best-score score)
           (reset! best-child child))))
