@@ -63,6 +63,16 @@
   (.fill @context)
   (.stroke @context))
 
+(defn outline-circle [x y radius colour]
+  (.beginPath @context)
+  (set! (.-strokeStyle @context) colour)
+  (set! (.-lineWidth @context) 3)
+
+  (.arc @context x y radius 0 two-pi)
+  (.closePath @context)
+  (.stroke @context))
+
+
 (defn draw-text [text x y colour]
   (set! (.-font @context) "30px Arial")
   (set! (.-fillStyle @context) colour)
@@ -80,6 +90,8 @@
                  black)))
 
 (defn draw-lines []
+  (set! (.-strokeStyle @context) black)
+  (set! (.-lineWidth @context) 1)
   (doseq [x (range board/size)]
     (let [x-start (+ (* x stone-width) stone-radius padding)
           x-end x-start
@@ -127,12 +139,18 @@
   (draw-score board))
 
 (defn play-off [board tree]
-  (display {:board board :to-move (.-colour tree)})
   (dotimes [_ 1000]
     (tree/expand (board/copy board) tree))
   (let [child (tree/best-child tree)
         move (.-pos child)]
     (board/set-colour board move (.-colour tree))
+    (display {:board board :to-move (.-colour tree)})
+    (let [x (dec (mod move board/array-size))
+          y (dec (quot move board/array-size))
+          centre-x (+ (* x stone-width) stone-radius padding)
+          centre-y (+ (* y stone-width) stone-radius padding)]
+      (js/console.log x y)
+      (outline-circle centre-x centre-y stone-radius "red"))
     (tree/uproot child)
     (js/window.setTimeout #(play-off board child) 0)))
 
