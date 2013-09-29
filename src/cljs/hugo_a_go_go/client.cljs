@@ -12,8 +12,9 @@
 (def stone-width (/ width (+ board/size 1)))
 (def stone-radius (/ stone-width 2))
 (def padding stone-radius)
-(def context (atom nil))
 
+(def context (atom nil))
+(def board (atom nil))
 (defn log [message]
   (.log js/console message))
 
@@ -38,7 +39,7 @@
                        ["O" "O" "O" "O" "O" "O" "O" "O" "O"]]))
 
 (def initial-state
-  {:board (debug-board)
+  {:board (board/new)
    :to-move :black})
 
 (defn make-move [{:keys [board to-move] :as state}
@@ -184,11 +185,13 @@
     (js/alert "Pass!")))
 
 (defn ^:export init []
-  (let [board (.getElementById js/document "board")
-        board-context (.getContext board "2d")]
+  (let [board-element (.getElementById js/document "board")
+        board-context (.getContext board-element "2d")]
     (reset! context board-context)
     (js/console.log "black is ai, white is random")
     ;; (play-off (board/new) :black)
     (play-off (easy-board) :black)
     ;; (hugo-a-go-go.play.play-random-game)
+    (reset! board board-element)
+    ;; (play-off (debug-board) (tree/new))
     ))

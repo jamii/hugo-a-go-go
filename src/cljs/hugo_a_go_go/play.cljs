@@ -1,7 +1,7 @@
 (ns hugo-a-go-go.play
   (:require
    [hugo-a-go-go.client :as client
-    :refer [make-move log]]
+    :refer [make-move board log]]
    [cljs.core.async :as async
     :refer [<! >! chan close! sliding-buffer put! alts!]])
   (:require-macros [cljs.core.async.macros :as m :refer [go alt!]]))
@@ -13,14 +13,32 @@
   false)
 
 (defn handle [e]
-  ;; (if (= (:to-move @state) :black)
-  (log "clicked")
-  (log e)
-  (put! input-chan  e))
-;; )
+  (if (= (:to-move @state) :black)
+        (log (clj->js (click-to-move e)))))
 
 (defn click-to-move [e]
-  (log e))
+  (let [x (if (.-pageX e)
+            (.-pageX e)
+            (+ (.-clientX e)
+               (-> js/document
+                   (.-body)
+                   (.-scrollLeft))
+               (-> js/document
+                   (.-documentElement)
+                   (.-scrollLeft))))
+        y (if (.-pageY e)
+            (.-pageY e)
+            (+ (.-clientY e)
+               (-> js/document
+                   (.-body)
+                   (.-scrollTop))
+               (-> js/document
+                   (.-documentElement)
+                   (.-scrollTop))))
+        x (- x (.-offsetLeft @board))
+        y (- y (.-offsetTop @board))]
+    [x y]))
+
 
 (defn human-player [state]
   (let [move (click-to-move (go (<! input-chan)))]
@@ -35,6 +53,4 @@
           (recur p1 p2)))))
 
 (defn play-random-game []
-  (go (loop []
-        (log (<! input-chan))
-        (recur))))
+  ())
