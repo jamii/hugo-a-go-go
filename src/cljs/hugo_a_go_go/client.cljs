@@ -188,10 +188,6 @@
   (let [board-element (.getElementById js/document "board")
         board-context (.getContext board-element "2d")]
     (reset! context board-context)
-    (js/console.log "black is ai, white is random")
-    ;; (play-off (board/new) :black)
-    (play-off (easy-board) :black)
-    ;; (hugo-a-go-go.play.play-random-game)
     (reset! board board-element)
-    ;; (play-off (debug-board) (tree/new))
+    (display initial-state)
     ))

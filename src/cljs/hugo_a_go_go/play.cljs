@@ -1,20 +1,26 @@
 (ns hugo-a-go-go.play
   (:require
    [hugo-a-go-go.client :as client
-    :refer [make-move board log]]
+    :refer [make-move board log width height stone-width padding]]
    [cljs.core.async :as async
     :refer [<! >! chan close! sliding-buffer put! alts!]])
   (:require-macros [cljs.core.async.macros :as m :refer [go alt!]]))
 
 (def state (atom hugo-a-go-go.client.initial-state))
-(def input-chan (chan))
 
 (defn finished? [state]
   false)
 
 (defn handle [e]
-  (if (= (:to-move @state) :black)
-        (log (clj->js (click-to-move e)))))
+  (let [move (click-to-move e)]
+    (log "clicked")
+    (log (clj->js move))
+    (reset! state (make-move @state move))
+    (hugo-a-go-go.client/display @state)
+    ;; (let [ai-move (ai @state)]
+    ;;   (reset! state (make-move state ai-move))
+    ;;   (hugo-a-go-go/display @state))
+    ))
 
 (defn click-to-move [e]
   (let [x (if (.-pageX e)
@@ -36,9 +42,15 @@
                    (.-documentElement)
                    (.-scrollTop))))
         x (- x (.-offsetLeft @board))
-        y (- y (.-offsetTop @board))]
-    [x y]))
+        y (- y (.-offsetTop @board))
 
+        x (- x padding)
+        y (- y padding)
+
+
+        ]
+    [(quot x stone-width)
+     (quot y stone-width)]))
 
 (defn human-player [state]
   (let [move (click-to-move (go (<! input-chan)))]
