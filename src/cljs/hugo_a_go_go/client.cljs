@@ -132,4 +132,5 @@
         height (.-height board)]
     (reset! context board-context)
     (display initial-state)
+    #_(js/console.log (with-out-str (time (dotimes [i 1000] (random/random-board 100)))))
     ))

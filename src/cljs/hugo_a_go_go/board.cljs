@@ -16,6 +16,11 @@
 (defn ->pos [x y]
   (+ 1 x (* array-size (+ 1 y))))
 
+(defn opposite-colour [colour]
+  (condp keyword-identical? colour
+    :black :white
+    :white :black))
+
 (defn new []
   (let [empty-string (->String :empty 0 0 0)
         border-string (->String :grey 0 0 0)

@@ -15,9 +15,11 @@
             nil
             (recur new-pos)))))))
 
-(defn random-board [n]
-  (let [board (board/new)]
-    (doseq [colour (take n (interleave (repeat :black) (repeat :white)))]
+(defn with-random-moves [board n starting-colour]
+  (doseq [colour (take n (interleave (repeat starting-colour) (repeat (board/opposite-colour starting-colour))))]
       (when-let [move (random-move board colour)]
         (board/set-colour board move colour)))
-    board))
+  board)
+
+(defn random-board [n]
+  (with-random-moves (board/new) n :black))
