@@ -59,23 +59,32 @@
 (defn get-liberties [^Board board pos]
   (.-liberties (aget (.-strings board) pos)))
 
+(defn neighbour [pos i]
+  (condp = i
+    0 (- pos array-size)
+    1 (inc pos)
+    2 (+ pos array-size)
+    3 (dec pos)))
+
 (defn suicide? [^Board board colour pos]
-  (let [strings (object-array 4)
-        liberties (atom 0)
-        string-i (atom 0)]
-    (foreach-neighbour neighbour-pos pos
-                       (aset strings @string-i (aget (.-strings board) neighbour-pos))
-                       (swap! string-i inc))
+  (let [suicide (atom true)
+        opposite-colour (condp keyword-identical? colour :black :white :white :black)]
     (dotimes [i 4]
-      (let [string (aget strings i)]
-        (when (= colour (.-colour string))
-          (swap! liberties + (dec (.-liberties string)))
-          (dotimes [j i]
-            (when (identical? (aget strings i) (aget strings j))
-              (swap! liberties - (.-liberties string)))))
-        (when (= :empty (.-colour string))
-          (swap! liberties inc))))
-    (= 0 @liberties)))
+      (let [string (aget (.-strings board) (neighbour pos i))]
+        (set! (.-liberties string) (dec (.-liberties string)))))
+    (dotimes [i 4]
+      (let [string (aget (.-strings board) (neighbour pos i))]
+        (condp keyword-identical? (.-colour string)
+          colour (when (> (.-liberties string) 0)
+                   (reset! suicide false))
+          opposite-colour (when (= (.-liberties string) 0)
+                            (reset! suicide false))
+          :empty (reset! suicide false)
+          :grey nil)))
+    (dotimes [i 4]
+      (let [string (aget (.-strings board) (neighbour pos i))]
+        (set! (.-liberties string) (inc (.-liberties string)))))
+    @suicide))
 
 (defn set-colour [^Board board pos colour]
   (assert (= :empty (get-colour board pos)))
