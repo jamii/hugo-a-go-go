@@ -7,7 +7,8 @@
 (defn random-move [board colour]
   (let [starting-pos (random-int board/max-pos)]
     (loop [pos starting-pos]
-      (if (board/valid? board colour pos)
+      (if (and (board/valid? board colour pos)
+               (not (board/eyelike? board colour pos)))
         pos
         (let [new-pos (mod (inc pos) board/max-pos)]
           (if (= starting-pos new-pos)

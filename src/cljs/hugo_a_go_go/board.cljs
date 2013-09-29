@@ -91,6 +91,12 @@
         (set! (.-liberties string) (inc (.-liberties string)))))
     @suicide))
 
+(defn eyelike? [^Board board colour pos]
+  (and (keyword-identical? colour (get-colour board (neighbour pos 0)))
+       (keyword-identical? colour (get-colour board (neighbour pos 1)))
+       (keyword-identical? colour (get-colour board (neighbour pos 2)))
+       (keyword-identical? colour (get-colour board (neighbour pos 3)))))
+
 (defn valid? [^Board board colour pos]
   (and (keyword-identical? :empty (get-colour board pos))
        (not (suicide? board colour pos))))
