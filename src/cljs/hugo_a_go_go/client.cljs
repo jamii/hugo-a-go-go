@@ -1,13 +1,13 @@
-(ns hugo-a-go-go.client)
+(ns hugo-a-go-go.client
+  (:require [hugo-a-go-go.board :as board]))
 
 (def line "#000")
 (def background "ffff99")
 (def white "#fff")
 (def black "#000")
-(def game-size 9)
 (def width 600)
 (def height 600)
-(def stone-width (/ width (+ game-size 1)))
+(def stone-width (/ width (+ board/size 1)))
 (def stone-radius (/ stone-width 2))
 (def padding stone-radius)
 (def context (atom nil))
@@ -15,39 +15,38 @@
 (defn log [message]
   (.log js/console message))
 
-(defn new-board [size]
-  (vec (take size (repeat (vec (take size (repeat nil)))))))
-
-(defn random-board [size]
-  (vec
-   (take
-    size
-    (repeatedly
-     (fn [] (vec (take size
-                       (repeatedly
-                        (fn [] (rand-nth [:black :white nil]))))))))))
+(def debug-board
+  (board/debug->board [["O" "#" "#" "O"]
+                       ["+" "+" "O" "O"]
+                       ["O" "O" "O" "#"]
+                       ["#" "#" "O" "+"]
+                       ["#" "+" "O" "+"]
+                       ["O" "#" "#" "O"]
+                       ["O" "O" "O" "O"]]))
 
 (def initial-state
-  {:board (random-board 9)
+  {:board debug-board
    :to-move :black})
 
 (defn make-move [{:keys [board to-move] :as state}
-                 [y x]]
-  {:board (assoc-in board [y x] to-move)
+                 [x y]]
+   (board/set-colour board (board/->pos x y) to-move)
+  {:board board
    :to-move (if (= to-move :black) :white :black)})
 
-(defn valid-moves [{:keys [board] :as state}]
-  (for [y (range (count board))
-        x (range (count board))
-        :when (nil? (get-in board [y x]))]
-    [y x]))
+(defn valid-moves [{:keys [board to-move] :as state}]
+  (for [y (range board/size)
+        x (range board/size)
+        :when (= :empty (board/get-colour board (board/->pos x y)))
+        :when (not (board/suicide? board to-move (board/->pos x y)))]
+    [x y]))
 
 ;; Players are given a state and return a move
 (defn random-player [state]
   (rand-nth (valid-moves state)))
 
-(defn get-pos [board y x]
-  (get-in board [y x]))
+(defn get-pos [board x y]
+  (board/get-colour board (board/->pos x y)))
 
 (def two-pi (* 2 (.-PI js/Math)))
 
@@ -63,19 +62,19 @@
   (.stroke @context))
 
 (defn draw-dots []
-  (doseq [y (range game-size)
-          x (range game-size)]
+  (doseq [y (range board/size)
+          x (range board/size)]
     (draw-circle (+ (* x stone-width) stone-radius padding)
                  (+ (* y stone-width) stone-radius padding)
                  5
                  black)))
 
 (defn draw-lines []
-  (doseq [x (range game-size)]
+  (doseq [x (range board/size)]
     (let [x-start (+ (* x stone-width) stone-radius padding)
           x-end x-start
           y-start (+ stone-radius padding)
-          y-end (+ (* (dec game-size) stone-width) stone-radius padding)]
+          y-end (+ (* (dec board/size) stone-width) stone-radius padding)]
       (.beginPath @context)
       (.moveTo @context x-start y-start)
       (.lineTo @context x-end y-end)
@@ -88,12 +87,13 @@
 
       )))
 
-(defn draw-pos [board y x]
-  (if-let [colour (get-pos board y x)]
-    (draw-circle (+ (* x stone-width) stone-radius padding)
-                 (+ (* y stone-width) stone-radius padding)
-                 stone-radius
-                 (if (= colour :black) black white))))
+(defn draw-pos [board x y]
+  (let [colour (get-pos board x y)]
+    (if (#{:black :white} colour)
+      (draw-circle (+ (* x stone-width) stone-radius padding)
+                   (+ (* y stone-width) stone-radius padding)
+                   stone-radius
+                   (if (= colour :black) black white)))))
 
 (defn blank-board []
   (set! (.-fillStyle @context) background)
@@ -103,9 +103,9 @@
   (blank-board)
   (draw-lines)
   (draw-dots)
-  (doseq [y (range game-size)
-          x (range game-size)]
-      (draw-pos board y x)))
+  (doseq [x (range board/size)
+          y (range board/size)]
+      (draw-pos board x y)))
 
 (defn ^:export init []
   (let [board (.getElementById js/document "board")
