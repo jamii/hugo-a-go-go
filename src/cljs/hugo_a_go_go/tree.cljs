@@ -43,7 +43,7 @@
                      (js/Math.sqrt
                       (/ (* 2 (js/Math.log (.-count node)))
                          (* 5 (.-count child)))))]
-        (if (> score @best-score)
+        (when (> score @best-score)
           (reset! best-score score)
           (reset! best-child child))))
     @best-child))
