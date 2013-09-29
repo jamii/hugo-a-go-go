@@ -14,7 +14,8 @@
          [:script {:src (str "js/" env ".js")}]
          ]
         [:body
-         {:onload "hugo_a_go_go.client.init()"}
+         {:onload "hugo_a_go_go.client.init()"
+          :onclick "javascript: hugo_a_go_go.play.handle(event);"}
          [:p]
          [:div [:canvas#board {:width "600" :height "600"}]]
          ]))
