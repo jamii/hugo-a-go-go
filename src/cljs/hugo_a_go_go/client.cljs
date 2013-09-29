@@ -138,7 +138,7 @@
     (draw-pos board x y))
   (draw-score board))
 
-(defn play-off [board tree]
+#_(defn play-off [board tree]
   (dotimes [_ 1000]
     (tree/expand (board/copy board) tree))
   (if-let [child (tree/best-child tree)]
@@ -147,7 +147,7 @@
           y (dec (quot move board/array-size))
           centre-x (+ (* x stone-width) stone-radius padding)
           centre-y (+ (* y stone-width) stone-radius padding)]
-      (js/console.log "move" x y (.-colour child))
+      (js/console.log "move" x y move (.-colour child))
       (assert (board/valid? board (.-colour child) move))
       (board/set-colour board move (.-colour tree))
       (tree/uproot child)
@@ -156,8 +156,22 @@
       (js/window.setTimeout #(play-off board child) 0))
     (js/alert "Pass!")))
 
+(defn play-off [board colour]
+  (if-let [move (tree/move-for board colour 1000)]
+    (let [x (dec (mod move board/array-size))
+          y (dec (quot move board/array-size))
+          centre-x (+ (* x stone-width) stone-radius padding)
+          centre-y (+ (* y stone-width) stone-radius padding)]
+      (js/console.log "move" x y move colour)
+      (assert (board/valid? board colour move))
+      (board/set-colour board move colour)
+      (display {:board board :to-move colour})
+      (outline-circle centre-x centre-y stone-radius "red")
+      (js/window.setTimeout #(play-off board (board/opposite-colour colour)) 0))
+    (js/alert "Pass!")))
+
 (defn ^:export init []
   (let [board (.getElementById js/document "board")
         board-context (.getContext board "2d")]
     (reset! context board-context)
-    (play-off (debug-board) (tree/new))))
+    (play-off (debug-board) :black)))

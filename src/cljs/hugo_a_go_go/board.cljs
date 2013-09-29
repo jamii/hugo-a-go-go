@@ -34,12 +34,12 @@
       (aset strings (->pos size (dec i)) border-string))
     (->Board strings empty-string)))
 
-(defn clear-string [^Board board string colour pos]
+(defn clear-string [^Board board string pos]
   (aset (.-strings board) pos (.-empty-string board))
   (foreach-neighbour neighbour-pos pos
                      (let [neighbour-string (aget (.-strings board) neighbour-pos)]
                        (if (identical? string neighbour-string)
-                         (clear-string board neighbour-string neighbour-colour neighbour-pos)
+                         (clear-string board neighbour-string neighbour-pos)
                          (set! (.-liberties neighbour-string) (inc (.-liberties neighbour-string)))))))
 
 (defn re-string [^Board board from-string to-string pos]
@@ -117,7 +117,7 @@
                            (do
                              (set! (.-liberties neighbour-string) (dec (.-liberties neighbour-string)))
                              (when (= 0 (.-liberties neighbour-string))
-                               (clear-string board neighbour-string neighbour-colour neighbour-pos))))))))
+                               (clear-string board neighbour-string neighbour-pos))))))))
 
 ;; TODO this is a really dumb solution
 (defn copy [board]

@@ -3,6 +3,7 @@
             [hugo-a-go-go.random :as random]))
 
 ;; TODO value and min/max is probably wrong
+;; TODO hashes for detecting repeated positions
 
 (defrecord Node [parent colour pos count sum nodes valids])
 
@@ -18,8 +19,8 @@
         (.push valids pos)))
     valids))
 
-(defn new []
-  (->Node nil :black 0 0 0 (object-array 0) (valids (board/new) :black)))
+(defn new [board colour]
+  (->Node nil colour 0 0 0 (object-array 0) (valids board (board/opposite-colour colour))))
 
 (defn uproot [node]
   (set! (.-parent node) nil)
@@ -33,7 +34,7 @@
 
 (defn expand-leaf [board parent colour pos]
   (board/set-colour board pos colour)
-  (let [valids (valids board colour)]
+  (let [valids (valids board (board/opposite-colour colour))]
     (random/with-random-moves board 100 (board/opposite-colour colour))
     (let [value (value board colour)]
       (add-value parent value)
@@ -52,14 +53,21 @@
           (reset! best-child child))))
     @best-child))
 
-(defn expand
-  ([node]
-     (expand (board/new) node))
-  ([board node]
-     (let [pos (.-pos node)]
-       (if (not= 0 pos) ;; top node has pos 0 - probably a smell
-         (board/set-colour board pos (.-colour node))))
-     (if-let [empty-pos (.pop (.-valids node))]
-       (.push (.-nodes node) (expand-leaf board node (board/opposite-colour (.-colour node)) empty-pos))
-       (if-let [child (best-child node)]
-         (expand board child)))))
+(defn expand [board node]
+  (let [pos (.-pos node)]
+    (if (not= 0 pos) ;; top node has pos 0 - probably a smell
+      (board/set-colour board pos (.-colour node))))
+  (if-let [valid-pos (.pop (.-valids node))]
+    (.push (.-nodes node) (expand-leaf board node (board/opposite-colour (.-colour node)) valid-pos))
+    (if-let [child (best-child node)]
+      (expand board child)
+      nil ;; no possible moves - pass
+      )))
+
+(defn move-for [board colour n]
+  (let [node (hugo-a-go-go.tree/new (board/copy board) colour)]
+    (dotimes [_ n]
+      (expand (board/copy board) node))
+    (js/console.log "result" node)
+    (when-let [child (best-child node)]
+      (.-pos child))))
