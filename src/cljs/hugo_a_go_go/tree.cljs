@@ -14,8 +14,7 @@
 (defn valids [board colour]
   (let [valids (object-array 0)]
     (dotimes [pos board/max-pos]
-      (when (and (keyword-identical? :empty (board/get-colour board pos))
-                 (not (board/suicide? board colour pos)))
+      (when (board/valid? board colour pos)
         (.push valids pos)))
     valids))
 
@@ -34,7 +33,7 @@
 
 (defn expand-leaf [board parent colour pos]
   (board/set-colour board pos colour)
-  (let [valids (valids board (board/opposite-colour colour))]
+  (let [valids (valids board colour)]
     (random/with-random-moves board 100 (board/opposite-colour colour))
     (let [value (value board colour)]
       (add-value parent value)

@@ -91,6 +91,10 @@
         (set! (.-liberties string) (inc (.-liberties string)))))
     @suicide))
 
+(defn valid? [^Board board colour pos]
+  (and (keyword-identical? :empty (get-colour board pos))
+       (not (suicide? board colour pos))))
+
 (defn set-colour [^Board board pos colour]
   (let [string (->String colour pos 1 0)]
     (aset (.-strings board) pos string)

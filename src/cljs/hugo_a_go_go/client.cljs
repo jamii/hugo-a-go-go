@@ -142,16 +142,17 @@
   (dotimes [_ 1000]
     (tree/expand (board/copy board) tree))
   (if-let [child (tree/best-child tree)]
-    (let [move (.-pos child)]
+    (let [move (.-pos child)
+          x (dec (mod move board/array-size))
+          y (dec (quot move board/array-size))
+          centre-x (+ (* x stone-width) stone-radius padding)
+          centre-y (+ (* y stone-width) stone-radius padding)]
+      (js/console.log "move" x y (.-colour child))
+      (assert (board/valid? board (.-colour child) move))
       (board/set-colour board move (.-colour tree))
-      (display {:board board :to-move (.-colour tree)})
-      (let [x (dec (mod move board/array-size))
-            y (dec (quot move board/array-size))
-            centre-x (+ (* x stone-width) stone-radius padding)
-            centre-y (+ (* y stone-width) stone-radius padding)]
-        (js/console.log x y)
-        (outline-circle centre-x centre-y stone-radius "red"))
       (tree/uproot child)
+      (display {:board board :to-move (.-colour tree)})
+      (outline-circle centre-x centre-y stone-radius "red")
       (js/window.setTimeout #(play-off board child) 0))
     (js/alert "Pass!")))
 
