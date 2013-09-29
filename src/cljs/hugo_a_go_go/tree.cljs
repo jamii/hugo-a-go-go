@@ -21,6 +21,10 @@
 (defn new []
   (->Node nil :black 0 0 0 (object-array 0) (empties (board/new))))
 
+(defn uproot [node]
+  (set! (.-parent node) nil)
+  (set! (.-pos node) 0))
+
 (defn add-value [node value]
   (set! (.-count node) (+ (.-count node) 1))
   (set! (.-sum node) (+ (.-sum node) value))

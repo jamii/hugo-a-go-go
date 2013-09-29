@@ -118,7 +118,7 @@
 ;; TODO this is a really dumb solution
 (defn copy [board]
   (let [new-board (hugo-a-go-go.board/new)]
-    (dotimes [i max-pos]
+    (dotimes [pos max-pos]
       (let [colour (get-colour board pos)]
         (when (#{:black :white} colour)
           (set-colour new-board pos colour))))

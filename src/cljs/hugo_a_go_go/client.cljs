@@ -32,7 +32,7 @@
 
 (defn make-move [{:keys [board to-move] :as state}
                  [x y]]
-   (board/set-colour board (board/->pos x y) to-move)
+  (board/set-colour board (board/->pos x y) to-move)
   {:board board
    :to-move (if (= to-move :black) :white :black)})
 
@@ -126,16 +126,18 @@
     (draw-pos board x y))
   (draw-score board))
 
+(defn play-off [board tree]
+  (display {:board board :to-move (.-colour tree)})
+  (dotimes [_ 1000]
+    (tree/expand (board/copy board) tree))
+  (let [child (tree/best-child tree)
+        move (.-pos child)]
+    (board/set-colour board move (.-colour tree))
+    (tree/uproot child)
+    (js/window.setTimeout #(play-off board child) 0)))
+
 (defn ^:export init []
   (let [board (.getElementById js/document "board")
-        board-context (.getContext board "2d")
-        width (.-width board)
-        height (.-height board)]
+        board-context (.getContext board "2d")]
     (reset! context board-context)
-    (display initial-state)
-    #_(js/console.log (with-out-str (time (dotimes [i 1000] (random/random-board 100)))))
-    (let [tree (tree/new)]
-      (dotimes [_ 1000]
-        (tree/expand (debug-board) tree))
-      (js/console.log (tree/best-child tree))
-      (js/console.log tree))))
+    (play-off (debug-board) (tree/new))))
