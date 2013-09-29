@@ -26,6 +26,17 @@
                        ["O" "#" "#" "O" "+" "+" "+" "+" "+"]
                        ["O" "O" "O" "O" "+" "+" "+" "+" "+"]]))
 
+(defn easy-board []
+  (board/debug->board [["#" "#" "#" "#" "#" "#" "#" "#" "#"]
+                       ["#" "#" "#" "#" "#" "#" "#" "#" "#"]
+                       ["#" "#" "#" "#" "#" "#" "#" "#" "#"]
+                       ["#" "#" "+" "#" "#" "#" "#" "#" "#"]
+                       ["#" "#" "+" "#" "#" "#" "+" "#" "#"]
+                       ["#" "#" "#" "#" "#" "#" "#" "#" "#"]
+                       ["#" "#" "#" "#" "#" "#" "#" "#" "#"]
+                       ["#" "#" "#" "#" "#" "#" "#" "#" "#"]
+                       ["#" "#" "#" "#" "#" "#" "#" "#" "#"]]))
+
 (def initial-state
   {:board (debug-board)
    :to-move :black})
@@ -157,7 +168,9 @@
     (js/alert "Pass!")))
 
 (defn play-off [board colour]
-  (if-let [move (tree/move-for board colour 1000)]
+  (if-let [move (if (= :black colour)
+                  (tree/move-for board colour 1000)
+                  (random/random-move board colour))]
     (let [x (dec (mod move board/array-size))
           y (dec (quot move board/array-size))
           centre-x (+ (* x stone-width) stone-radius padding)
@@ -174,6 +187,8 @@
   (let [board (.getElementById js/document "board")
         board-context (.getContext board "2d")]
     (reset! context board-context)
-    (play-off (debug-board) :black)
+    (js/console.log "black is ai, white is random")
+    ;; (play-off (board/new) :black)
+    (play-off (easy-board) :black)
     ;; (hugo-a-go-go.play.play-random-game)
     ))
