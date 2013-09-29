@@ -32,6 +32,10 @@ task :update_ssh do
   sudo "mv -f /tmp/authorized_keys /root/.ssh/authorized_keys"
 end
 
+task :cljs_clean do
+  run "cd #{release_path} && lein cljsbuild clean && lein cljsbuild once"
+end
+
 before :deploy, :update_ssh, :update_upstart
 after "deploy:restart", "deploy:cleanup"
 
