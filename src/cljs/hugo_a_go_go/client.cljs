@@ -1,6 +1,7 @@
 (ns hugo-a-go-go.client
   (:require [hugo-a-go-go.board :as board]
-            [hugo-a-go-go.random :as random]))
+            [hugo-a-go-go.random :as random]
+            [hugo-a-go-go.tree :as tree]))
 
 (def line "#000")
 (def background "ffff99")
@@ -16,7 +17,7 @@
 (defn log [message]
   (.log js/console message))
 
-(def debug-board
+(defn debug-board []
   (board/debug->board [["O" "#" "#" "O" "+" "+" "O" "#" "+"]
                        ["#" "+" "O" "O" "+" "+" "O" "#" "#"]
                        ["O" "O" "O" "#" "+" "+" "O" "O" "O"]
@@ -26,7 +27,7 @@
                        ["O" "O" "O" "O" "+" "+" "+" "+" "+"]]))
 
 (def initial-state
-  {:board (random/random-board 100)
+  {:board (debug-board)
    :to-move :black})
 
 (defn make-move [{:keys [board to-move] :as state}
@@ -133,4 +134,7 @@
     (reset! context board-context)
     (display initial-state)
     #_(js/console.log (with-out-str (time (dotimes [i 1000] (random/random-board 100)))))
-    ))
+    (let [tree (tree/new)]
+      (dotimes [_ 1]
+        (tree/expand- (debug-board) tree))
+      (js/console.log (tree/best-child tree)))))
