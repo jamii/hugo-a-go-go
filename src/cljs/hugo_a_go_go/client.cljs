@@ -174,4 +174,6 @@
   (let [board (.getElementById js/document "board")
         board-context (.getContext board "2d")]
     (reset! context board-context)
-    (play-off (debug-board) :black)))
+    (play-off (debug-board) :black)
+    ;; (hugo-a-go-go.play.play-random-game)
+    ))
