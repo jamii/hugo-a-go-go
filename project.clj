@@ -25,7 +25,7 @@
 
                                    :optimizations :advanced
                                    :pretty-print false
-                                   :source-map "resources/public/js/prod.js.map"
+                                   ;; :source-map "resources/public/js/prod.js.map"
                                    :static-fns true
                                    }}
                        }}
