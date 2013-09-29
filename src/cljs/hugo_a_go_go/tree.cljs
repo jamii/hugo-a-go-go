@@ -4,22 +4,23 @@
 
 ;; TODO value and min/max is probably wrong
 
-(defrecord Node [parent colour pos count sum nodes empties])
+(defrecord Node [parent colour pos count sum nodes valids])
 
 (defn value [board colour]
   (let [score (board/score board)]
     (- (score colour) (score (board/opposite-colour colour)))))
 
 ;; TODO should track this incrementally in the board
-(defn empties [board]
-  (let [empties (object-array 0)]
+(defn valids [board colour]
+  (let [valids (object-array 0)]
     (dotimes [pos board/max-pos]
-      (when (keyword-identical? :empty (board/get-colour board pos))
-        (.push empties pos)))
-    empties))
+      (when (and (keyword-identical? :empty (board/get-colour board pos))
+                 (not (board/suicide? board colour pos)))
+        (.push valids pos)))
+    valids))
 
 (defn new []
-  (->Node nil :black 0 0 0 (object-array 0) (empties (board/new))))
+  (->Node nil :black 0 0 0 (object-array 0) (valids (board/new) :black)))
 
 (defn uproot [node]
   (set! (.-parent node) nil)
@@ -33,11 +34,11 @@
 
 (defn expand-leaf [board parent colour pos]
   (board/set-colour board pos colour)
-  (let [empties (empties board)]
+  (let [valids (valids board (board/opposite-colour colour))]
     (random/with-random-moves board 100 (board/opposite-colour colour))
     (let [value (value board colour)]
       (add-value parent value)
-      (->Node parent colour pos 1 value (object-array 0) empties))))
+      (->Node parent colour pos 1 value (object-array 0) valids))))
 
 (defn best-child [node]
   (let [best-score (atom (- (/ 1 0)))
@@ -59,7 +60,7 @@
      (let [pos (.-pos node)]
        (if (not= 0 pos) ;; top node has pos 0 - probably a smell
          (board/set-colour board pos (.-colour node))))
-     (if-let [empty-pos (.pop (.-empties node))]
+     (if-let [empty-pos (.pop (.-valids node))]
        (.push (.-nodes node) (expand-leaf board node (board/opposite-colour (.-colour node)) empty-pos))
        (if-let [child (best-child node)]
          (expand board child)))))
