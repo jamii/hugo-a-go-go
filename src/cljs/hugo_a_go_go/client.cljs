@@ -61,6 +61,14 @@
   (.fill @context)
   (.stroke @context))
 
+(defn draw-text [text x y colour]
+  (set! (.-font @context) "30px Arial")
+  (set! (.-fillStyle @context) colour)
+  (set! (.-strokeStyle @context) colour)
+  (set! (.-lineWidth @context) 1)
+
+  (.fillText @context text x y))
+
 (defn draw-dots []
   (doseq [y (range board/size)
           x (range board/size)]
@@ -83,17 +91,19 @@
       (.beginPath @context)
       (.moveTo @context y-start x-start)
       (.lineTo @context y-end x-end)
-      (.stroke @context)
-
-      )))
+      (.stroke @context))))
 
 (defn draw-pos [board x y]
   (let [colour (get-pos board x y)]
-    (if (#{:black :white} colour)
+    (when (#{:black :white} colour)
       (draw-circle (+ (* x stone-width) stone-radius padding)
                    (+ (* y stone-width) stone-radius padding)
                    stone-radius
-                   (if (= colour :black) black white)))))
+                   (if (= colour :black) black white))
+      (draw-text (str (board/get-liberties board (board/->pos x y)))
+                 (+ (* x stone-width) stone-radius padding)
+                 (+ (* y stone-width) stone-radius padding)
+                 (if (= colour :black) white black)))))
 
 (defn blank-board []
   (set! (.-fillStyle @context) background)

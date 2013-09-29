@@ -56,6 +56,9 @@
 (defn get-colour [^Board board pos]
   (.-colour (aget (.-strings board) pos)))
 
+(defn get-liberties [^Board board pos]
+  (.-liberties (aget (.-strings board) pos)))
+
 (defn suicide? [^Board board colour pos]
   (let [strings (object-array 4)
         liberties (atom 0)
