@@ -134,8 +134,15 @@
     (when (and (= :empty colour) (board/suicide? board :black (board/->pos x y)))
       (draw-text "X" (- centre-x 20) (+ centre-y 20) black))))
 
-(defn draw-score [board]
-  (draw-text (board/score board) padding height black))
+(defn highlight-move [move]
+  (let [x (dec (mod move board/array-size))
+        y (dec (quot move board/array-size))
+        centre-x (+ (* x stone-width) stone-radius padding)
+        centre-y (+ (* y stone-width) stone-radius padding)]
+    (outline-circle centre-x centre-y stone-radius "red")))
+
+(defn draw-subtitle [text]
+  (draw-text (str text) padding height black))
 
 (defn blank-board []
   (set! (.-fillStyle @context) background)
@@ -147,8 +154,7 @@
   (draw-dots)
   (doseq [x (range board/size)
           y (range board/size)]
-    (draw-pos board x y))
-  (draw-score board))
+    (draw-pos board x y)))
 
 #_(defn play-off [board tree]
   (dotimes [_ 1000]

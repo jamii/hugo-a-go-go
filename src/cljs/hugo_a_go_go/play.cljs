@@ -17,6 +17,7 @@
     (log move)
     (reset! state (make-move @state move))
     (hugo-a-go-go.client/display @state)
+    (hugo-a-go-go.client/draw-subtitle "Thinking...")
     (js/window.setTimeout
      (fn []
        (let [ai-move (tree/move-for (:board @state) :white 10000)
@@ -25,6 +26,8 @@
          (log [x y])
          (reset! state (make-move @state [x y]))
          (hugo-a-go-go.client/display @state)
+         (hugo-a-go-go.client/draw-subtitle (board/score (:board @state)))
+         (hugo-a-go-go.client/highlight-move ai-move)
          ))
      1)))
 
