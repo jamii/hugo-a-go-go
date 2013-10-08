@@ -17,14 +17,16 @@
     (log move)
     (reset! state (make-move @state move))
     (hugo-a-go-go.client/display @state)
-    (let [ai-move (tree/move-for (:board @state) :white 10000)
-          x (dec (mod ai-move board/array-size))
-          y (dec (quot ai-move board/array-size))]
-      (log [x y])
-      (reset! state (make-move @state [x y]))
-      (hugo-a-go-go.client/display @state)
-      )
-    ))
+    (js/window.setTimeout
+     (fn []
+       (let [ai-move (tree/move-for (:board @state) :white 10000)
+             x (dec (mod ai-move board/array-size))
+             y (dec (quot ai-move board/array-size))]
+         (log [x y])
+         (reset! state (make-move @state [x y]))
+         (hugo-a-go-go.client/display @state)
+         ))
+     1)))
 
 (defn click-to-move [e]
   (let [x (if (.-pageX e)
