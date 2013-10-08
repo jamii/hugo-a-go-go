@@ -11,6 +11,8 @@
 
 (def state (atom hugo-a-go-go.client.initial-state))
 
+(declare click-to-move)
+
 (defn ^:export handle [e]
   (let [move (click-to-move e)]
     (when (board/valid? (:board @state) board/black (apply board/->pos move))

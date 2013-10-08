@@ -24,7 +24,7 @@
                                    :output-to "resources/public/js/prod.js"
 
                                    :optimizations :advanced
-                                   :pretty-print false
+                                   :pretty-print true
                                    ;; :source-map "resources/public/js/prod.js.map"
                                    :static-fns true
                                    }}
