@@ -43,7 +43,8 @@
 (defn expand-leaf [board ai-colour parent colour pos]
   (board/set-colour board pos colour)
   (let [valids (valids board (board/opposite-colour colour))]
-    (random/with-random-moves-from board 100 (board/opposite-colour colour) (aclone valids))
+    (random/with-random-moves board 100 (board/opposite-colour colour))
+    #_(random/with-random-moves-from board 100 (board/opposite-colour colour) (aclone valids))
     (let [value (value board ai-colour)]
       (add-value parent value)
       (->Node parent colour pos 1 value (object-array 0) valids))))
