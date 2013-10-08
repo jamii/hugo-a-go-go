@@ -22,7 +22,7 @@
   board)
 
 (defn random-board [n]
-  (with-random-moves (board/new) n :black))
+  (with-random-moves (board/new) n board/black))
 
 ;; massive speedup at the expense of never playing in killed spaces
 (defn with-random-moves-from [board n starting-colour moves]

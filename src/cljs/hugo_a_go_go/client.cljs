@@ -40,13 +40,13 @@
 
 (def initial-state
   {:board (board/new)
-   :to-move :black})
+   :to-move board/black})
 
 (defn make-move [{:keys [board to-move] :as state}
                  [x y]]
   (board/set-colour board (board/->pos x y) to-move)
   {:board board
-   :to-move (if (= to-move :black) :white :black)})
+   :to-move (if (= to-move board/black) board/white board/black)})
 
 (defn valid-moves [{:keys [board to-move] :as state}]
   (for [y (range board/size)
@@ -123,15 +123,15 @@
   (let [colour (get-pos board x y)
         centre-x (+ (* x stone-width) stone-radius padding)
         centre-y (+ (* y stone-width) stone-radius padding)]
-    (when (#{:black :white} colour)
+    (when (#{board/black board/white} colour)
       (draw-circle centre-x centre-y stone-radius
-                   (if (= colour :black) black white))
+                   (if (= colour board/black) black white))
       (draw-text (str (board/get-liberties board (board/->pos x y)))
                  centre-x centre-y
-                 (if (= colour :black) white black)))
-    (when (and (= :empty colour) (board/suicide? board :white (board/->pos x y)))
+                 (if (= colour board/black) white black)))
+    (when (and (= :empty colour) (board/suicide? board board/white (board/->pos x y)))
       (draw-text "X" centre-x centre-y white))
-    (when (and (= :empty colour) (board/suicide? board :black (board/->pos x y)))
+    (when (and (= :empty colour) (board/suicide? board board/black (board/->pos x y)))
       (draw-text "X" (- centre-x 20) (+ centre-y 20) black))))
 
 (defn highlight-move [move]
@@ -175,7 +175,7 @@
     (js/alert "Pass!")))
 
 (defn play-off [board colour]
-  (if-let [move (if (= :black colour)
+  (if-let [move (if (= board/black colour)
                   (tree/move-for board colour 1000)
                   (random/random-move board colour))]
     (let [x (dec (mod move board/array-size))

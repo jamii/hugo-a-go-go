@@ -5,9 +5,15 @@
 ;; This was written in a terrible rush
 
 ;; TODO scoring, cleanup
+;; TODO could use (identical? empty-string %) instead of (= :empty %)
 
 (defrecord String [colour origin size liberties])
 (defrecord Board [strings empty-string])
+
+(def black :black)
+(def white :white)
+(def grey :grey)
+(def empty :empty)
 
 (def size 9)
 (def array-size (+ 2 size))
@@ -17,13 +23,11 @@
   (+ 1 x (* array-size (+ 1 y))))
 
 (defn opposite-colour [colour]
-  (condp keyword-identical? colour
-    :black :white
-    :white :black))
+  (if (identical? colour black) white black))
 
 (defn new []
-  (let [empty-string (->String :empty 0 0 0)
-        border-string (->String :grey 0 0 0)
+  (let [empty-string (->String empty 0 0 0)
+        border-string (->String grey 0 0 0)
         strings (object-array max-pos)]
     (dotimes [i max-pos]
       (aset strings i empty-string))
@@ -73,19 +77,19 @@
 
 (defn suicide? [^Board board colour pos]
   (let [suicide (atom true)
-        opposite-colour (condp keyword-identical? colour :black :white :white :black)]
+        opposite-colour (opposite-colour colour)]
     (foreach-neighbour neighbour-pos pos
       (let [string (aget (.-strings board) neighbour-pos)]
         (set! (.-liberties string) (dec (.-liberties string)))))
     (foreach-neighbour neighbour-pos pos
       (let [string (aget (.-strings board) neighbour-pos)]
-        (condp keyword-identical? (.-colour string)
+        (condp identical? (.-colour string)
           colour (when (> (.-liberties string) 0)
                    (reset! suicide false))
           opposite-colour (when (= (.-liberties string) 0)
                             (reset! suicide false))
-          :empty (reset! suicide false)
-          :grey nil)))
+          empty (reset! suicide false)
+          grey nil)))
     (foreach-neighbour neighbour-pos pos
       (let [string (aget (.-strings board) neighbour-pos)]
         (set! (.-liberties string) (inc (.-liberties string)))))
@@ -94,12 +98,15 @@
 (defn eyelike? [^Board board colour pos]
   (let [eyelike? (atom true)]
     (foreach-neighbour neighbour-pos pos
-                       (when (not (keyword-identical? colour (get-colour board neighbour-pos)))
+                       (when (not (identical? colour (get-colour board neighbour-pos)))
                          (reset! eyelike? false)))
     @eyelike?))
 
+(defn empty? [board pos]
+  (identical? (.-empty-string board) (aget (.-strings board) pos)))
+
 (defn valid? [^Board board colour pos]
-  (and (keyword-identical? :empty (get-colour board pos))
+  (and (empty? board pos)
        (not (suicide? board colour pos))))
 
 (defn set-colour [^Board board pos colour]
@@ -108,11 +115,11 @@
     (foreach-neighbour neighbour-pos pos
                        (let [neighbour-string (aget (.-strings board) neighbour-pos)
                              neighbour-colour (.-colour neighbour-string)]
-                         (condp keyword-identical? neighbour-colour
-                           :empty
+                         (condp identical? neighbour-colour
+                           empty
                            (set! (.-liberties (aget (.-strings board) pos)) (inc (.-liberties (aget (.-strings board) pos))))
 
-                           :grey
+                           grey
                            nil
 
                            colour
@@ -131,7 +138,7 @@
   (let [new-board (hugo-a-go-go.board/new)]
     (dotimes [pos max-pos]
       (let [colour (get-colour board pos)]
-        (when (#{:black :white} colour)
+        (when (#{black white} colour)
           (set-colour new-board pos colour))))
     new-board))
 
@@ -140,37 +147,37 @@
     (letfn [(flood-fill-around [pos]
               (foreach-neighbour pos pos
                   (when (and (not (aget filled pos))
-                             (keyword-identical? :empty (get-colour board pos)))
+                             (empty? board pos))
                     (aset filled pos true)
                     (flood-fill-around pos))))]
       (dotimes [x size]
         (dotimes [y size]
           (let [pos (->pos x y)]
-            (when (keyword-identical? colour (get-colour board pos))
+            (when (identical? colour (get-colour board pos))
               (aset filled pos true)
               (flood-fill-around pos))))))
     (count (filter identity filled))))
 
 (defn score [board]
-  (let [white-flood (flood-fill board :white)
-        black-flood (flood-fill board :black)
+  (let [white-flood (flood-fill board white)
+        black-flood (flood-fill board black)
         total (* size size)
         overlap (- (+ white-flood black-flood) total)
         white-score (- white-flood overlap)
         black-score (- black-flood overlap)]
-    {:white white-score :black black-score}))
+    {white white-score black black-score}))
 
 (defn colour->string [colour]
   (case colour
-    :empty "+"
-    :black "#"
-    :white "O"))
+    empty "+"
+    black "#"
+    white "O"))
 
 (defn string->colour [string]
   (condp = string
-    "+" :empty
-    "#" :black
-    "O" :white))
+    "+" empty
+    "#" black
+    "O" white))
 
 (defn print [board]
   (let [strings (into #{} (.-strings board))
@@ -179,7 +186,7 @@
     (dotimes [y size]
       (dotimes [x size]
         (clojure.core/print
-         (str (if (and (= :empty (get-colour board (->pos x y))) (suicide? board :black (->pos x y)))
+         (str (if (and (= empty (get-colour board (->pos x y))) (suicide? board black (->pos x y)))
                 "X"
                 (colour->string (get-colour board (->pos x y))))
               (string->id (aget (.-strings board) (->pos x y)))
