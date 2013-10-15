@@ -75,10 +75,11 @@
     2 (+ pos array-size)
     3 (dec pos)))
 
+(def suicide-box (object-array 1))
+
 (defn ^boolean suicide? [^Board board colour pos]
-  (let [suicide (object-array 1)
-        _ (aset suicide 0 true)
-        opposite-colour (opposite-colour colour)]
+  (let [opposite-colour (opposite-colour colour)]
+    (aset suicide-box 0 true)
     (foreach-neighbour neighbour-pos pos
       (let [string (aget (.-strings board) neighbour-pos)]
         (set! (.-liberties string) (dec (.-liberties string)))))
@@ -87,26 +88,27 @@
         (cond
          (identical? (.-colour string) colour)
          (when (> (.-liberties string) 0)
-           (aset suicide 0 false))
+           (aset suicide-box 0 false))
 
          (identical? (.-colour string) opposite-colour)
          (when (== (.-liberties string) 0)
-           (aset suicide 0 false))
+           (aset suicide-box 0 false))
 
          (identical? (.-colour string) empty)
-         (aset suicide 0 false))))
+         (aset suicide-box 0 false))))
     (foreach-neighbour neighbour-pos pos
       (let [string (aget (.-strings board) neighbour-pos)]
         (set! (.-liberties string) (inc (.-liberties string)))))
-    (aget suicide 0)))
+    (aget suicide-box 0)))
+
+(def eyelike-box (object-array 1))
 
 (defn ^boolean eyelike? [^Board board colour pos]
-  (let [eyelike? (object-array 1)
-        _ (aset eyelike? 0 true)]
-    (foreach-neighbour neighbour-pos pos
-                       (when (not (identical? colour (get-colour board neighbour-pos)))
-                         (aset eyelike? 0 false)))
-    (aget eyelike? 0)))
+  (aset eyelike-box 0 true)
+  (foreach-neighbour neighbour-pos pos
+                     (when (not (identical? colour (get-colour board neighbour-pos)))
+                       (aset eyelike-box 0 false)))
+  (aget eyelike-box 0))
 
 (defn ^boolean empty? [board pos]
   (identical? (.-empty-string board) (aget (.-strings board) pos)))

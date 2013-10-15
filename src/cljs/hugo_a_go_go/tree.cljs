@@ -51,9 +51,11 @@
       (add-value parent ai-colour value)
       (->Node parent colour pos 1 value (object-array 0) valids))))
 
+(def explorer-box (object-array 1))
+
 (defn explorer [node]
-  (let [explorer (object-array 1) ;; ew :(
-        nodes (.-nodes node)]
+  (let [nodes (.-nodes node)]
+    (aset explorer-box 0 nil)
     (areduce nodes i best-score (- (/ 1 0))
              (let [child (aget nodes i)
                    score (+ (/ (.-sum child) (.-count child))
@@ -61,10 +63,10 @@
                              (/ (* 2 (js/Math.log (.-count node)))
                                 (* 5 (.-count child)))))]
                (if (> score best-score)
-                 (do (aset explorer 0 child)
+                 (do (aset explorer-box 0 child)
                      score)
                  best-score)))
-    (aget explorer 0)))
+    (aget explorer-box 0)))
 
 (defn exploiter [node]
   (let [best-score (atom (- (/ 1 0)))
