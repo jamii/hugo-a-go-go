@@ -84,13 +84,17 @@
         (set! (.-liberties string) (dec (.-liberties string)))))
     (foreach-neighbour neighbour-pos pos
       (let [string (aget (.-strings board) neighbour-pos)]
-        (condp identical? (.-colour string)
-          colour (when (> (.-liberties string) 0)
-                   (aset suicide 0 false))
-          opposite-colour (when (== (.-liberties string) 0)
-                            (aset suicide 0 false))
-          empty (aset suicide 0 false)
-          grey nil)))
+        (cond
+         (identical? (.-colour string) colour)
+         (when (> (.-liberties string) 0)
+           (aset suicide 0 false))
+
+         (identical? (.-colour string) opposite-colour)
+         (when (== (.-liberties string) 0)
+           (aset suicide 0 false))
+
+         (identical? (.-colour string) empty)
+         (aset suicide 0 false))))
     (foreach-neighbour neighbour-pos pos
       (let [string (aget (.-strings board) neighbour-pos)]
         (set! (.-liberties string) (inc (.-liberties string)))))
@@ -117,22 +121,19 @@
     (foreach-neighbour neighbour-pos pos
                        (let [neighbour-string (aget (.-strings board) neighbour-pos)
                              neighbour-colour (.-colour neighbour-string)]
-                         (condp identical? neighbour-colour
-                           empty
-                           (set! (.-liberties (aget (.-strings board) pos)) (inc (.-liberties (aget (.-strings board) pos))))
+                         (cond
+                          (identical? neighbour-colour empty)
+                          (set! (.-liberties (aget (.-strings board) pos)) (inc (.-liberties (aget (.-strings board) pos))))
 
-                           grey
-                           nil
+                          (identical? neighbour-colour colour)
+                          (do
+                            (set! (.-liberties neighbour-string) (dec (.-liberties neighbour-string)))
+                            (join-strings board (aget (.-strings board) pos) neighbour-string pos neighbour-pos))
 
-                           colour
-                           (do
-                             (set! (.-liberties neighbour-string) (dec (.-liberties neighbour-string)))
-                             (join-strings board (aget (.-strings board) pos) neighbour-string pos neighbour-pos))
-
-                           ;; opposite colour
-                           (do
-                             (set! (.-liberties neighbour-string) (dec (.-liberties neighbour-string)))
-                             (when (== 0 (.-liberties neighbour-string))
+                          (identical? neighbour-colour (opposite-colour colour))
+                          (do
+                            (set! (.-liberties neighbour-string) (dec (.-liberties neighbour-string)))
+                            (when (== 0 (.-liberties neighbour-string))
                                (clear-string board neighbour-string neighbour-pos))))))))
 
 ;; TODO this is a really dumb solution
