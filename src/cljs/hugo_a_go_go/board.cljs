@@ -138,7 +138,7 @@
   (let [new-board (hugo-a-go-go.board/new)]
     (dotimes [pos max-pos]
       (let [colour (get-colour board pos)]
-        (when (#{black white} colour)
+        (when (or (identical? white colour) (identical? black colour))
           (set-colour new-board pos colour))))
     new-board))
 
