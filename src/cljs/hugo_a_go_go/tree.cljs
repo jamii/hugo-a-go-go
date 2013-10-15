@@ -9,7 +9,7 @@
 
 (defn value [board colour]
   (let [score (board/score board)]
-    (- (score colour) (score (board/opposite-colour colour)))))
+    (score colour)))
 
 ;; rough approximation of the final score if the board is tightly packed
 #_(defn value [board colour]
