@@ -10,7 +10,8 @@
       (if (and (board/valid? board colour pos)
                (not (board/eyelike? board colour pos)))
         pos
-        (let [new-pos (mod (inc pos) board/max-pos)]
+        (let [new-pos (inc pos)
+              new-pos (if (== new-pos board/max-pos) 0 new-pos)]
           (if (== starting-pos new-pos)
             nil
             (recur new-pos)))))))
