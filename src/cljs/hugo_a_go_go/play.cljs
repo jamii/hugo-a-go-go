@@ -23,7 +23,7 @@
       (hugo-a-go-go.client/draw-subtitle "Thinking...")
       (js/window.setTimeout
        (fn []
-         (let [ai-move (tree/move-for (:board @state) board/white 10000)
+         (let [ai-move (tree/move-for (:board @state) board/white 50000)
                x (dec (mod ai-move board/array-size))
                y (dec (quot ai-move board/array-size))]
            (log [x y])
