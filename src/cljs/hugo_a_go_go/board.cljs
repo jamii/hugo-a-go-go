@@ -156,7 +156,7 @@
             (when (identical? colour (get-colour board pos))
               (aset filled pos true)
               (flood-fill-around pos))))))
-    (count (filter identity filled))))
+    (areduce filled i sum 0 (if (aget filled i) (inc sum) sum))))
 
 (defn score [board]
   (let [white-flood (flood-fill board white)
