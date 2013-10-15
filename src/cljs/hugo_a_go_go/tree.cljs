@@ -52,17 +52,19 @@
       (->Node parent colour pos 1 value (object-array 0) valids))))
 
 (defn explorer [node]
-  (let [best-score (atom (- (/ 1 0)))
-        explorer (atom nil)]
-    (doseq [child (.-nodes node)]
-      (let [score (+ (/ (.-sum child) (.-count child))
-                     (js/Math.sqrt
-                      (/ (* 2 (js/Math.log (.-count node)))
-                         (* 5 (.-count child)))))]
-        (when (> score @best-score)
-          (reset! best-score score)
-          (reset! explorer child))))
-    @explorer))
+  (let [explorer (object-array 1) ;; ew :(
+        nodes (.-nodes node)]
+    (areduce nodes i best-score (- (/ 1 0))
+             (let [child (aget nodes i)
+                   score (+ (/ (.-sum child) (.-count child))
+                            (js/Math.sqrt
+                             (/ (* 2 (js/Math.log (.-count node)))
+                                (* 5 (.-count child)))))]
+               (if (> score best-score)
+                 (do (aset explorer 0 child)
+                     score)
+                 best-score)))
+    (aget explorer 0)))
 
 (defn exploiter [node]
   (let [best-score (atom (- (/ 1 0)))
