@@ -58,10 +58,10 @@
     (aset explorer-box 0 nil)
     (areduce nodes i best-score (- (/ 1 0))
              (let [child (aget nodes i)
-                   score (+ (/ (.-sum child) (.-count child))
+                   score (+ (/ (.-sum child) (.-count child) (* board/size board/size))
                             (js/Math.sqrt
                              (/ (* 2 (js/Math.log (.-count node)))
-                                (* 5 (.-count child)))))]
+                                (.-count child))))]
                (if (> score best-score)
                  (do (aset explorer-box 0 child)
                      score)
