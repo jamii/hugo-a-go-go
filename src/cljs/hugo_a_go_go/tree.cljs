@@ -11,14 +11,6 @@
   (let [score (board/score board)]
     (score colour)))
 
-;; rough approximation of the final score if the board is tightly packed
-#_(defn value [board colour]
-  (let [score (atom 0)]
-    (dotimes [pos board/max-pos]
-      (when (keyword-identical? colour (board/get-colour board pos))
-        (swap! score inc)))
-    @score))
-
 ;; TODO should track this incrementally in the board
 (defn valids [board colour]
   (let [valids (object-array 0)]
