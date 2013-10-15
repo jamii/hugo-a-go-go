@@ -34,11 +34,13 @@
   (set! (.-parent node) nil)
   (set! (.-pos node) 0))
 
-(defn add-value [node value]
+(defn add-value [node ai-colour value]
   (set! (.-count node) (+ (.-count node) 1))
-  (set! (.-sum node) (+ (.-sum node) value))
+  (set! (.-sum node) (if (= ai-colour (.-colour node))
+                       (+ (.-sum node) value)
+                       (- (.-sum node) value)))
   (if-let [parent (.-parent node)]
-    (recur parent value)))
+    (recur parent ai-colour value)))
 
 (defn expand-leaf [board ai-colour parent colour pos]
   (board/set-colour board pos colour)
@@ -46,25 +48,12 @@
     (random/with-random-moves board 100 (board/opposite-colour colour))
     #_(random/with-random-moves-from board 100 (board/opposite-colour colour) (aclone valids))
     (let [value (value board ai-colour)]
-      (add-value parent value)
+      (add-value parent ai-colour value)
       (->Node parent colour pos 1 value (object-array 0) valids))))
 
-(defn worst-child [node]
-  (let [best-score (atom (/ 1 0))
-        best-child (atom nil)]
-    (doseq [child (.-nodes node)]
-      (let [score (+ (/ (.-sum child) (.-count child))
-                     (js/Math.sqrt
-                      (/ (* 2 (js/Math.log (.-count node)))
-                         (* 5 (.-count child)))))]
-        (when (< score @best-score)
-          (reset! best-score score)
-          (reset! best-child child))))
-    @best-child))
-
-(defn best-child [node]
+(defn explorer [node]
   (let [best-score (atom (- (/ 1 0)))
-        best-child (atom nil)]
+        explorer (atom nil)]
     (doseq [child (.-nodes node)]
       (let [score (+ (/ (.-sum child) (.-count child))
                      (js/Math.sqrt
@@ -72,8 +61,18 @@
                          (* 5 (.-count child)))))]
         (when (> score @best-score)
           (reset! best-score score)
-          (reset! best-child child))))
-    @best-child))
+          (reset! explorer child))))
+    @explorer))
+
+(defn exploiter [node]
+  (let [best-score (atom (- (/ 1 0)))
+        exploiter (atom nil)]
+    (doseq [child (.-nodes node)]
+      (let [score (/ (.-sum child) (.-count child))]
+        (when (> score @best-score)
+          (reset! best-score score)
+          (reset! exploiter child))))
+    @exploiter))
 
 (defn expand [board node ai-colour]
   (let [pos (.-pos node)]
@@ -81,9 +80,7 @@
       (board/set-colour board pos (.-colour node))))
   (if-let [valid-pos (.pop (.-valids node))]
     (.push (.-nodes node) (expand-leaf board ai-colour node (board/opposite-colour (.-colour node)) valid-pos))
-    (if-let [child (if (= (.-colour node) ai-colour)
-                     (worst-child node)
-                     (best-child node))]
+    (if-let [child (explorer node)]
       (expand board child ai-colour)
       nil ;; no possible moves - pass
       )))
@@ -92,5 +89,5 @@
   (let [node (hugo-a-go-go.tree/new (board/copy board) colour)]
     (dotimes [_ n]
       (expand (board/copy board) node colour))
-    (when-let [child (best-child node)]
+    (when-let [child (exploiter node)]
       (.-pos child))))
