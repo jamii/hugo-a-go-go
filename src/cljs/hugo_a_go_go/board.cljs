@@ -69,7 +69,7 @@
   (.-liberties (aget (.-strings board) pos)))
 
 (defn neighbour [pos i]
-  (condp = i
+  (condp == i
     0 (- pos array-size)
     1 (inc pos)
     2 (+ pos array-size)
@@ -86,7 +86,7 @@
         (condp identical? (.-colour string)
           colour (when (> (.-liberties string) 0)
                    (reset! suicide false))
-          opposite-colour (when (= (.-liberties string) 0)
+          opposite-colour (when (== (.-liberties string) 0)
                             (reset! suicide false))
           empty (reset! suicide false)
           grey nil)))
@@ -130,7 +130,7 @@
                            ;; opposite colour
                            (do
                              (set! (.-liberties neighbour-string) (dec (.-liberties neighbour-string)))
-                             (when (= 0 (.-liberties neighbour-string))
+                             (when (== 0 (.-liberties neighbour-string))
                                (clear-string board neighbour-string neighbour-pos))))))))
 
 ;; TODO this is a really dumb solution

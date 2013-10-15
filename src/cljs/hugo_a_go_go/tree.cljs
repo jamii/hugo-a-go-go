@@ -36,7 +36,7 @@
 
 (defn add-value [node ai-colour value]
   (set! (.-count node) (+ (.-count node) 1))
-  (set! (.-sum node) (if (= ai-colour (.-colour node))
+  (set! (.-sum node) (if (identical? ai-colour (.-colour node))
                        (+ (.-sum node) value)
                        (- (.-sum node) value)))
   (if-let [parent (.-parent node)]
