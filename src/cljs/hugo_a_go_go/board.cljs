@@ -75,7 +75,7 @@
     2 (+ pos array-size)
     3 (dec pos)))
 
-(defn suicide? [^Board board colour pos]
+(defn ^boolean suicide? [^Board board colour pos]
   (let [suicide (atom true)
         opposite-colour (opposite-colour colour)]
     (foreach-neighbour neighbour-pos pos
@@ -95,17 +95,17 @@
         (set! (.-liberties string) (inc (.-liberties string)))))
     @suicide))
 
-(defn eyelike? [^Board board colour pos]
+(defn ^boolean eyelike? [^Board board colour pos]
   (let [eyelike? (atom true)]
     (foreach-neighbour neighbour-pos pos
                        (when (not (identical? colour (get-colour board neighbour-pos)))
                          (reset! eyelike? false)))
     @eyelike?))
 
-(defn empty? [board pos]
+(defn ^boolean empty? [board pos]
   (identical? (.-empty-string board) (aget (.-strings board) pos)))
 
-(defn valid? [^Board board colour pos]
+(defn ^boolean valid? [^Board board colour pos]
   (and (empty? board pos)
        (not (suicide? board colour pos))))
 
