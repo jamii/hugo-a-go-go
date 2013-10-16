@@ -80,7 +80,7 @@
      (dotimes [i 4]
        (let [neighbour-pos (neighbour pos i)]
          (when (== string (get-string board neighbour-pos))
-           (clear-string string board neighbour-pos))))))
+           (clear-string board string neighbour-pos))))))
 
 (defn rename-string [board from-string to-string pos]
   (when (== from-string (get-string board pos))
