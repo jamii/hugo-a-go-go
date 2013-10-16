@@ -18,14 +18,16 @@
     (when (board/valid? (:board @state) board/black (apply board/->pos move))
       (log "clicked")
       (log move)
-      (js/console.log (board/board->string (:board @state)))
+      #_(js/console.log (board/board->string (:board @state)))
       (reset! state (make-move @state move))
-      (js/console.log (board/board->string (:board @state)))
+      #_(js/console.log (board/board->string (:board @state)))
       (hugo-a-go-go.client/display @state)
       (hugo-a-go-go.client/draw-subtitle "Thinking...")
       (js/window.setTimeout
        (fn []
-         (let [ai-move (tree/move-for (:board @state) board/white 10000)
+         (let [_ (js/console.time "ai-move")
+               ai-move (tree/move-for (:board @state) board/white 10000)
+               _ (js/console.timeEnd "ai-move")
                x (dec (mod ai-move board/array-size))
                y (dec (quot ai-move board/array-size))]
            (log [x y])
