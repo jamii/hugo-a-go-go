@@ -70,7 +70,7 @@
   (set-colour board pos empty)
   (set-string board pos empty-string)
   (dotimes [i 4]
-    (add-liberties board (neighbour pos i) -1)))
+    (add-liberties board (neighbour pos i) 1)))
 
 (defn clear-string
   ([board pos]
