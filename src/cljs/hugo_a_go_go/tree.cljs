@@ -5,7 +5,7 @@
 ;; TODO value and min/max is probably wrong
 ;; TODO hashes for detecting repeated positions
 
-(defrecord Node [parent colour pos count sum nodes valids])
+(defrecord Node [parent board colour pos count sum nodes valids])
 
 (defn value [board colour]
   (let [score (board/score board)]
@@ -20,7 +20,7 @@
     valids))
 
 (defn new [board colour]
-  (->Node nil (board/opposite-colour colour) 0 0 0 (object-array 0) (valids board colour)))
+  (->Node nil board (board/opposite-colour colour) 0 0 0 (object-array 0) (valids board colour)))
 
 (defn uproot [node]
   (set! (.-parent node) nil)
@@ -35,12 +35,13 @@
     (recur parent ai-colour value)))
 
 (defn expand-leaf [board ai-colour parent colour pos]
-  (board/place-stone board pos colour)
-  (let [valids (valids board (board/opposite-colour colour))]
-    (random/with-random-moves board 100 (board/opposite-colour colour))
-    (let [value (value board ai-colour)]
-      (add-value parent ai-colour value)
-      (->Node parent colour pos 1 value (object-array 0) valids))))
+  (let [board (board/copy board)]
+    (board/place-stone board pos colour)
+    (let [valids (valids board (board/opposite-colour colour))]
+      (let [future-board (random/with-random-moves board 100 (board/opposite-colour colour))
+            value (value future-board ai-colour)]
+        (add-value parent ai-colour value)
+        (->Node parent board colour pos 1 value (object-array 0) valids)))))
 
 (def explorer-box (object-array 1))
 
@@ -69,20 +70,17 @@
           (reset! exploiter child))))
     @exploiter))
 
-(defn expand [board node ai-colour]
-  (let [pos (.-pos node)]
-    (if (not (== 0 pos)) ;; top node has pos 0 - probably a smell
-      (board/place-stone board pos (.-colour node))))
+(defn expand [node ai-colour]
   (if-let [valid-pos (.pop (.-valids node))]
-    (.push (.-nodes node) (expand-leaf board ai-colour node (board/opposite-colour (.-colour node)) valid-pos))
+    (.push (.-nodes node) (expand-leaf (.-board node) ai-colour node (board/opposite-colour (.-colour node)) valid-pos))
     (if-let [child (explorer node)]
-      (expand board child ai-colour)
+      (expand child ai-colour)
       nil ;; no possible moves - pass
       )))
 
 (defn move-for [board colour n]
   (let [node (hugo-a-go-go.tree/new (board/copy board) colour)]
     (dotimes [_ n]
-      (expand (board/copy board) node colour))
+      (expand node colour))
     (when-let [child (exploiter node)]
       (.-pos child))))

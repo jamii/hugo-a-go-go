@@ -17,13 +17,14 @@
             (recur new-pos)))))))
 
 (defn with-random-moves [board n starting-colour]
-  (loop [n n
-         colour starting-colour]
-    (when (> n 0)
-      (when-let [move (random-move board colour)]
-        (board/place-stone board move colour))
-      (recur (dec n) (board/opposite-colour colour))))
-  board)
+  (let [board (board/copy board)]
+    (loop [n n
+           colour starting-colour]
+      (when (> n 0)
+        (when-let [move (random-move board colour)]
+          (board/place-stone board move colour))
+        (recur (dec n) (board/opposite-colour colour))))
+    board))
 
 (defn random-board [n]
   (with-random-moves (board/new) n board/black))
