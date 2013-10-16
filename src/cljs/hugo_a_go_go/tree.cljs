@@ -35,7 +35,7 @@
     (recur parent ai-colour value)))
 
 (defn expand-leaf [board ai-colour parent colour pos]
-  (board/set-colour board pos colour)
+  (board/place-stone board pos colour)
   (let [valids (valids board (board/opposite-colour colour))]
     (random/with-random-moves board 100 (board/opposite-colour colour))
     (let [value (value board ai-colour)]
@@ -72,7 +72,7 @@
 (defn expand [board node ai-colour]
   (let [pos (.-pos node)]
     (if (not (== 0 pos)) ;; top node has pos 0 - probably a smell
-      (board/set-colour board pos (.-colour node))))
+      (board/place-stone board pos (.-colour node))))
   (if-let [valid-pos (.pop (.-valids node))]
     (.push (.-nodes node) (expand-leaf board ai-colour node (board/opposite-colour (.-colour node)) valid-pos))
     (if-let [child (explorer node)]

@@ -1,19 +1,26 @@
 (ns hugo-a-go-go.board
-  (:require-macros [hugo-a-go-go.board-macros :refer [foreach-neighbour]]))
+  (:require-macros [hugo-a-go-go.macros :refer [case== get-colour set-colour get-string set-string get-liberties add-liberties]]))
 
 ;; ....don't judge me.
 ;; This was written in a terrible rush
 
-;; TODO scoring, cleanup
-;; TODO could use (identical? empty-string %) instead of (= :empty %)
+;; --- COLOURS ---
 
-(defrecord String [colour origin size liberties])
-(defrecord Board [strings empty-string])
+(def empty 0)
+(def black 1)
+(def white 2)
+(def grey 3)
 
-(def black :black)
-(def white :white)
-(def grey :grey)
-(def empty :empty)
+(defn opposite-colour [colour]
+  (if (== colour black) white black))
+
+;; --- LAYOUT ---
+
+;; board layout:
+;; pos->colour * max-pos
+;; pos->string * max-pos
+;; next-string * 1
+;; string->liberties * (1024 - 2 * max-pos - 1)
 
 (def size 9)
 (def array-size (+ 2 size))
@@ -22,145 +29,142 @@
 (defn ->pos [x y]
   (+ 1 x (* array-size (+ 1 y))))
 
-(defn opposite-colour [colour]
-  (if (identical? colour black) white black))
+(defn neighbour [pos i]
+  (case== i
+          0 (+ pos 1)
+          1 (+ pos array-size)
+          2 (- pos 1)
+          3 (- pos array-size)))
+
+(defn new-string [board]
+  (let [next-string-ix (+ max-pos max-pos)
+        next-string (aget board next-string-ix)]
+    (aset board next-string-ix (+ next-string 1))
+    next-string))
+
+(def empty-string 0)
+(def grey-string 1)
 
 (defn new []
-  (let [empty-string (->String empty 0 0 0)
-        border-string (->String grey 0 0 0)
-        strings (object-array max-pos)]
-    (dotimes [i max-pos]
-      (aset strings i empty-string))
+  (let [board (new js/Uint8Array 1024)
+        empty-string (new-string board)
+        grey-string (new-string board)]
+    ;; colours and strings all start as 0 = empty
     (dotimes [i array-size]
-      (aset strings (->pos (dec i) -1) border-string)
-      (aset strings (->pos (dec i) size) border-string)
-      (aset strings (->pos -1 (dec i)) border-string)
-      (aset strings (->pos size (dec i)) border-string))
-    (->Board strings empty-string)))
+      (set-colour board (->pos (dec i) -1) grey)
+      (set-string board (->pos (dec i) -1) grey-string)
+      (set-colour board (->pos (dec i) size) grey)
+      (set-string board (->pos (dec i) size) grey-string)
+      (set-colour board (->pos -1 (dec i)) grey)
+      (set-string board (->pos -1 (dec i)) grey-string)
+      (set-colour board (->pos size (dec i)) grey)
+      (set-string board (->pos size (dec i)) grey-string))
+    board))
 
-(defn clear-string [^Board board string pos]
-  (aset (.-strings board) pos (.-empty-string board))
-  (foreach-neighbour neighbour-pos pos
-                     (let [neighbour-string (aget (.-strings board) neighbour-pos)]
-                       (if (identical? string neighbour-string)
-                         (clear-string board neighbour-string neighbour-pos)
-                         (set! (.-liberties neighbour-string) (inc (.-liberties neighbour-string)))))))
+(defn copy [board]
+  (new js/Uint8Array board))
 
-(defn re-string [^Board board from-string to-string pos]
-  (when (identical? (aget (.-strings board) pos) from-string)
-    (aset (.-strings board) pos to-string)
-    (foreach-neighbour neighbour-pos pos
-                       (let [neighbour-string (aget (.-strings board) neighbour-pos)]
-                         (re-string board from-string to-string neighbour-pos)))))
+;; --- STONES AND STRINGS ---
 
-(defn join-strings [^Board board string-a string-b pos-a pos-b]
-  (if (> (.-size string-a) (.-size string-b))
-    (join-strings board string-b string-a pos-b pos-a)
+(defn clear-stone [board pos]
+  (set-colour board pos empty)
+  (set-string board pos empty-string)
+  (dotimes [i 4]
+    (add-liberties board (neighbour pos i) -1)))
 
-    (when-not (identical? string-a string-b)
-      (set! (.-size string-b) (+ (.-size string-a) (.-size string-b)))
-      (set! (.-liberties string-b) (+ (.-liberties string-a) (.-liberties string-b)))
-      (re-string board string-a string-b pos-a))))
+(defn clear-string
+  ([board pos]
+     (clear-string board (get-string board pos) pos))
+  ([board string pos]
+     (clear-stone board pos)
+     (dotimes [i 4]
+       (let [neighbour-pos (neighbour pos i)]
+         (when (== string (get-string board neighbour-pos))
+           (clear-string string board neighbour-pos))))))
 
-(defn get-colour [^Board board pos]
-  (.-colour (aget (.-strings board) pos)))
+(defn rename-string [board from-string to-string pos]
+  (when (== from-string (get-string board pos))
+    (set-string board pos to-string)
+    (dotimes [i 4]
+      (let [neighbour-pos (neighbour pos i)]
+        (rename-string board from-string to-string neighbour-pos)))))
 
-(defn get-liberties [^Board board pos]
-  (.-liberties (aget (.-strings board) pos)))
+(defn join-strings [board pos-a pos-b]
+  (add-liberties board pos-b (get-liberties board pos-a))
+  (rename-string board (get-string board pos-a) (get-string board pos-b) pos-a))
 
-(defn neighbour [pos i]
-  (condp == i
-    0 (- pos array-size)
-    1 (inc pos)
-    2 (+ pos array-size)
-    3 (dec pos)))
+(defn place-stone [board pos colour]
+  (let [string (new-string board)
+        opposite-colour (opposite-colour colour)]
+    (set-colour board pos colour)
+    (set-string board pos string)
+    (dotimes [i 4]
+      (let [neighbour-pos (neighbour pos i)]
+        (case== (get-colour board neighbour-pos)
+                empty (add-liberties board pos 1)
+                colour (do (add-liberties board neighbour-pos -1)
+                           (when (not (== (get-string board pos) (get-string board neighbour-pos)))
+                             (join-strings board pos neighbour-pos)))
+                opposite-colour (do (add-liberties board neighbour-pos -1)
+                                    (when (== 0 (get-liberties board neighbour-pos))
+                                      (clear-string board neighbour-pos))))))))
 
-(def suicide-box (object-array 1))
+;; --- INFO ---
 
-(defn ^boolean suicide? [^Board board colour pos]
+(def suicide-box (make-array 1))
+
+(defn ^boolean suicide? [board colour pos]
   (let [opposite-colour (opposite-colour colour)]
     (aset suicide-box 0 true)
-    (foreach-neighbour neighbour-pos pos
-      (let [string (aget (.-strings board) neighbour-pos)]
-        (set! (.-liberties string) (dec (.-liberties string)))))
-    (foreach-neighbour neighbour-pos pos
-      (let [string (aget (.-strings board) neighbour-pos)]
-        (cond
-         (identical? (.-colour string) colour)
-         (when (> (.-liberties string) 0)
-           (aset suicide-box 0 false))
-
-         (identical? (.-colour string) opposite-colour)
-         (when (== (.-liberties string) 0)
-           (aset suicide-box 0 false))
-
-         (identical? (.-colour string) empty)
-         (aset suicide-box 0 false))))
-    (foreach-neighbour neighbour-pos pos
-      (let [string (aget (.-strings board) neighbour-pos)]
-        (set! (.-liberties string) (inc (.-liberties string)))))
+    (dotimes [i 4]
+      (let [neighbour-pos (neighbour pos i)]
+        (add-liberties board neighbour-pos -1)))
+    (dotimes [i 4]
+      (let [neighbour-pos (neighbour pos i)]
+        (case== (get-colour board (neighbour pos i))
+                empty (aset suicide-box 0 false)
+                colour (when (> (get-liberties board neighbour-pos) 0)
+                         (aset suicide-box 0 false))
+                opposite-colour (when (== (get-liberties board neighbour-pos) 0)
+                                  (aset suicide-box 0 false)))))
+    (dotimes [i 4]
+      (let [neighbour-pos (neighbour pos i)]
+        (add-liberties board neighbour-pos 1)))
     (aget suicide-box 0)))
 
-(def eyelike-box (object-array 1))
+(def eyelike-box (make-array 1))
 
-(defn ^boolean eyelike? [^Board board colour pos]
+(defn ^boolean eyelike? [board colour pos]
   (aset eyelike-box 0 true)
-  (foreach-neighbour neighbour-pos pos
-                     (when (not (identical? colour (get-colour board neighbour-pos)))
-                       (aset eyelike-box 0 false)))
+  (dotimes [i 4]
+    (let [neighbour-pos (neighbour pos i)]
+      (when-not (== colour (get-colour board neighbour-pos))
+        (aset eyelike-box 0 false))))
   (aget eyelike-box 0))
 
 (defn ^boolean empty? [board pos]
-  (identical? (.-empty-string board) (aget (.-strings board) pos)))
+  (== empty (get-colour board pos)))
 
-(defn ^boolean valid? [^Board board colour pos]
+(defn ^boolean valid? [board colour pos]
   (and (empty? board pos)
        (not (suicide? board colour pos))))
 
-(defn set-colour [^Board board pos colour]
-  (let [string (->String colour pos 1 0)]
-    (aset (.-strings board) pos string)
-    (foreach-neighbour neighbour-pos pos
-                       (let [neighbour-string (aget (.-strings board) neighbour-pos)
-                             neighbour-colour (.-colour neighbour-string)]
-                         (cond
-                          (identical? neighbour-colour empty)
-                          (set! (.-liberties (aget (.-strings board) pos)) (inc (.-liberties (aget (.-strings board) pos))))
+;; --- SCORING ---
 
-                          (identical? neighbour-colour colour)
-                          (do
-                            (set! (.-liberties neighbour-string) (dec (.-liberties neighbour-string)))
-                            (join-strings board (aget (.-strings board) pos) neighbour-string pos neighbour-pos))
-
-                          (identical? neighbour-colour (opposite-colour colour))
-                          (do
-                            (set! (.-liberties neighbour-string) (dec (.-liberties neighbour-string)))
-                            (when (== 0 (.-liberties neighbour-string))
-                               (clear-string board neighbour-string neighbour-pos))))))))
-
-;; TODO this is a really dumb solution
-(defn copy [board]
-  (let [new-board (hugo-a-go-go.board/new)]
-    (dotimes [pos max-pos]
-      (let [colour (get-colour board pos)]
-        (when (or (identical? white colour) (identical? black colour))
-          (set-colour new-board pos colour))))
-    new-board))
+(defn flood-fill-around [board filled pos]
+  (when (and (not (aget filled pos))
+             (empty? board pos))
+    (aset filled pos true)
+    (dotimes [i 4]
+      (flood-fill-around board filled (neighbour pos i)))))
 
 (defn flood-fill [board colour]
-  (let [filled (object-array max-pos)]
-    (letfn [(flood-fill-around [pos]
-              (foreach-neighbour pos pos
-                  (when (and (not (aget filled pos))
-                             (empty? board pos))
-                    (aset filled pos true)
-                    (flood-fill-around pos))))]
-      (dotimes [x size]
-        (dotimes [y size]
-          (let [pos (->pos x y)]
-            (when (identical? colour (get-colour board pos))
-              (aset filled pos true)
-              (flood-fill-around pos))))))
+  (let [filled (make-array max-pos)]
+    (dotimes [pos max-pos]
+      (when (== colour (get-colour board pos))
+        (aset filled pos true)
+        (dotimes [i 4]
+          (flood-fill-around board filled (neighbour pos i)))))
     (areduce filled i sum 0 (if (aget filled i) (inc sum) sum))))
 
 (defn score [board]
@@ -172,31 +176,38 @@
         black-score (- black-flood overlap)]
     {white white-score black black-score}))
 
+;; --- DEBUGGING
+
 (defn colour->string [colour]
-  (case colour
-    :empty "+"
-    :black "#"
-    :white "O"))
+  (case== colour
+          empty " "
+          black "#"
+          white "O"
+          grey "+"))
 
 (defn string->colour [string]
   (condp = string
-    "+" empty
+    " " empty
     "#" black
-    "O" white))
+    "O" white
+    "+" grey))
 
-(defn print [board]
-  (let [strings (into #{} (.-strings board))
-        string->id (zipmap strings (map #(char (+ 97 %)) (range)))]
-    (prn)
-    (dotimes [y size]
-      (dotimes [x size]
-        (clojure.core/print
-         (str (if (and (= empty (get-colour board (->pos x y))) (suicide? board black (->pos x y)))
-                "X"
-                (colour->string (get-colour board (->pos x y))))
-              (string->id (aget (.-strings board) (->pos x y)))
-              (.-liberties (aget (.-strings board) (->pos x y)))
-              " ")))
+(defn board->string [board]
+  (with-out-str
+    (let [strings (into #{} (.-strings board))
+          string->id (zipmap strings (map #(char (+ 97 %)) (range)))]
+      (dotimes [y array-size]
+        (prn)
+        (dotimes [x array-size]
+          (let [pos (+ y (* array-size x))]
+            (print
+             (str (if (and (empty? board pos)
+                           (suicide? board black pos))
+                    "X"
+                    (colour->string (get-colour board pos)))
+                  (char (+ 97 (get-string board pos)))
+                  (get-liberties board pos)
+                  " ")))))
       (prn))))
 
 (defn debug->board [debug]
@@ -204,5 +215,5 @@
     (doseq [[y row] (zipmap (range) debug)
             [x string] (zipmap (range) row)]
       (when (#{"O" "#"} string)
-        (set-colour board (->pos x y) (string->colour string))))
+        (place-stone board (->pos x y) (string->colour string))))
     board))

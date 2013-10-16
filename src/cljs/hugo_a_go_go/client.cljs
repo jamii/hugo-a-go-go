@@ -1,7 +1,8 @@
 (ns hugo-a-go-go.client
   (:require [hugo-a-go-go.board :as board]
             [hugo-a-go-go.random :as random]
-            [hugo-a-go-go.tree :as tree]))
+            [hugo-a-go-go.tree :as tree])
+  (:require-macros [hugo-a-go-go.macros :refer [case== get-colour set-colour get-string set-string get-liberties add-liberties]]))
 
 (def line "#000")
 (def background "ffff99")
@@ -44,14 +45,14 @@
 
 (defn make-move [{:keys [board to-move] :as state}
                  [x y]]
-  (board/set-colour board (board/->pos x y) to-move)
+  (board/place-stone board (board/->pos x y) to-move)
   {:board board
    :to-move (if (= to-move board/black) board/white board/black)})
 
 (defn valid-moves [{:keys [board to-move] :as state}]
   (for [y (range board/size)
         x (range board/size)
-        :when (= :empty (board/get-colour board (board/->pos x y)))
+        :when (= :empty (get-colour board (board/->pos x y)))
         :when (not (board/suicide? board to-move (board/->pos x y)))]
     [x y]))
 
@@ -60,7 +61,7 @@
   (rand-nth (valid-moves state)))
 
 (defn get-pos [board x y]
-  (board/get-colour board (board/->pos x y)))
+  (get-colour board (board/->pos x y)))
 
 (def two-pi (* 2 (.-PI js/Math)))
 
@@ -126,7 +127,9 @@
     (when (#{board/black board/white} colour)
       (draw-circle centre-x centre-y stone-radius
                    (if (= colour board/black) black white))
-      (draw-text (str (board/get-liberties board (board/->pos x y)))
+      (draw-text (str (get-liberties board (board/->pos x y))
+                      " "
+                      (get-string board (board/->pos x y)))
                  centre-x centre-y
                  (if (= colour board/black) white black)))
     (when (and (= :empty colour) (board/suicide? board board/white (board/->pos x y)))
@@ -167,7 +170,7 @@
           centre-y (+ (* y stone-width) stone-radius padding)]
       (js/console.log "move" x y move (.-colour child))
       (assert (board/valid? board (.-colour child) move))
-      (board/set-colour board move (.-colour tree))
+      (board/place-stone board move (.-colour tree))
       (tree/uproot child)
       (display {:board board :to-move (.-colour tree)})
       (outline-circle centre-x centre-y stone-radius "red")
@@ -184,7 +187,7 @@
           centre-y (+ (* y stone-width) stone-radius padding)]
       (js/console.log "move" x y move colour)
       (assert (board/valid? board colour move))
-      (board/set-colour board move colour)
+      (board/place-stone board move colour)
       (display {:board board :to-move colour})
       (outline-circle centre-x centre-y stone-radius "red")
       (js/window.setTimeout #(play-off board (board/opposite-colour colour)) 0))

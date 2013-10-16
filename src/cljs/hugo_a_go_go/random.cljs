@@ -21,7 +21,7 @@
          colour starting-colour]
     (when (> n 0)
       (when-let [move (random-move board colour)]
-        (board/set-colour board move colour))
+        (board/place-stone board move colour))
       (recur (dec n) (board/opposite-colour colour))))
   board)
 
