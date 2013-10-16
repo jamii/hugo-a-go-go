@@ -128,8 +128,7 @@
       (draw-circle centre-x centre-y stone-radius
                    (if (= colour board/black) black white))
       (draw-text (str (get-liberties board (board/->pos x y))
-                      " "
-                      (get-string board (board/->pos x y)))
+                      (char (+ 97 (get-string board (board/->pos x y)))))
                  centre-x centre-y
                  (if (= colour board/black) white black)))
     (when (and (= :empty colour) (board/suicide? board board/white (board/->pos x y)))
