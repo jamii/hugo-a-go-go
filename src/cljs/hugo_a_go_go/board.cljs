@@ -147,35 +147,36 @@
           (set-colour new-board pos colour))))
     new-board))
 
-(defn flood-fill-around [board filled pos]
-  (aset filled pos true)
-  (foreach-neighbour pos pos
-                     (when (and (not (aget filled pos))
-                                (empty? board pos))
-                       (flood-fill-around board filled pos))))
-
 (defn flood-fill [board colour]
   (let [filled (object-array max-pos)]
-    (dotimes [pos max-pos]
-      (when (and (not (aget filled pos))
-                 (identical? colour (get-colour board pos)))
-        (flood-fill-around board filled pos)))
+    (letfn [(flood-fill-around [pos]
+              (foreach-neighbour pos pos
+                  (when (and (not (aget filled pos))
+                             (empty? board pos))
+                    (aset filled pos true)
+                    (flood-fill-around pos))))]
+      (dotimes [x size]
+        (dotimes [y size]
+          (let [pos (->pos x y)]
+            (when (identical? colour (get-colour board pos))
+              (aset filled pos true)
+              (flood-fill-around pos))))))
     (areduce filled i sum 0 (if (aget filled i) (inc sum) sum))))
 
-(defn score [board colour]
+(defn score [board]
   (let [white-flood (flood-fill board white)
         black-flood (flood-fill board black)
         total (* size size)
         overlap (- (+ white-flood black-flood) total)
         white-score (- white-flood overlap)
         black-score (- black-flood overlap)]
-    (if (identical? colour black) black-score white-score)))
+    {white white-score black black-score}))
 
 (defn colour->string [colour]
   (case colour
-    :empty "+"
-    :black "#"
-    :white "O"))
+    empty "+"
+    black "#"
+    white "O"))
 
 (defn string->colour [string]
   (condp = string
