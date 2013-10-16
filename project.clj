@@ -7,7 +7,6 @@
                  [org.clojure/clojurescript "0.0-1909"]]
   :plugins [[lein-cljsbuild "0.3.3"]
             [lein-ring "0.8.7"]]
-  :hooks [leiningen.cljsbuild]
   :source-paths ["src/clj"]
   :cljsbuild {:builds {:dev
                        {:source-paths ["src/brepl" "src/cljs"]
