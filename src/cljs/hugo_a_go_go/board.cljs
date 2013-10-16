@@ -174,9 +174,9 @@
 
 (defn colour->string [colour]
   (case colour
-    empty "+"
-    black "#"
-    white "O"))
+    :empty "+"
+    :black "#"
+    :white "O"))
 
 (defn string->colour [string]
   (condp = string
