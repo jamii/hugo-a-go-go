@@ -72,15 +72,12 @@
   (dotimes [i 4]
     (add-liberties board (neighbour pos i) 1)))
 
-(defn clear-string
-  ([board pos]
-     (clear-string board (get-string board pos) pos))
-  ([board string pos]
-     (clear-stone board pos)
-     (dotimes [i 4]
-       (let [neighbour-pos (neighbour pos i)]
-         (when (== string (get-string board neighbour-pos))
-           (clear-string board string neighbour-pos))))))
+(defn clear-string [board string pos]
+  (clear-stone board pos)
+  (dotimes [i 4]
+    (let [neighbour-pos (neighbour pos i)]
+      (when (== string (get-string board neighbour-pos))
+        (clear-string board string neighbour-pos)))))
 
 (defn rename-string [board from-string to-string pos]
   (when (== from-string (get-string board pos))
@@ -107,7 +104,7 @@
                              (join-strings board pos neighbour-pos)))
                 opposite-colour (do (add-liberties board neighbour-pos -1)
                                     (when (== 0 (get-liberties board neighbour-pos))
-                                      (clear-string board neighbour-pos))))))))
+                                      (clear-string board (get-string board neighbour-pos) neighbour-pos))))))))
 
 ;; --- INFO ---
 
