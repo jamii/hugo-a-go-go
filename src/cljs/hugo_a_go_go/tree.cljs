@@ -7,10 +7,6 @@
 
 (defrecord Node [parent board colour pos count sum nodes valids])
 
-(defn value [board colour]
-  (let [score (board/score board)]
-    (score colour)))
-
 ;; TODO should track this incrementally in the board
 (defn valids [board colour]
   (let [valids (object-array 0)]
@@ -39,7 +35,7 @@
     (board/place-stone board pos colour)
     (let [valids (valids board (board/opposite-colour colour))]
       (let [future-board (random/with-random-moves board 100 (board/opposite-colour colour))
-            value (value future-board ai-colour)]
+            value (board/score future-board ai-colour)]
         (add-value parent ai-colour value)
         (->Node parent board colour pos 1 value (object-array 0) valids)))))
 

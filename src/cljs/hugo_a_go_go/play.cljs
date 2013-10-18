@@ -26,14 +26,16 @@
       (js/window.setTimeout
        (fn []
          (let [_ (js/console.time "ai-move")
-               ai-move (tree/move-for (:board @state) board/white 10000)
+               ai-move (tree/move-for (:board @state) board/white 50000)
                _ (js/console.timeEnd "ai-move")
                x (dec (mod ai-move board/array-size))
                y (dec (quot ai-move board/array-size))]
            (log [x y])
            (reset! state (make-move @state [x y]))
            (hugo-a-go-go.client/display @state)
-           (hugo-a-go-go.client/draw-subtitle (board/score (:board @state)))
+           (hugo-a-go-go.client/draw-subtitle
+            {:black (board/score (:board @state) board/black)
+             :white (board/score (:board @state) board/white)})
            (hugo-a-go-go.client/highlight-move ai-move)
            ))
        1))))

@@ -152,7 +152,7 @@
 ;; --- SCORING ---
 
 (defn flood-fill-around [board filled pos]
-  (when (and (not (aget filled pos))
+  (when (and (false? (aget filled pos))
              (empty? board pos))
     (aset filled pos true)
     (dotimes [i 4]
@@ -165,16 +165,16 @@
         (aset filled pos true)
         (dotimes [i 4]
           (flood-fill-around board filled (neighbour pos i)))))
-    (areduce filled i sum 0 (if (aget filled i) (inc sum) sum))))
+    (areduce filled i sum 0 (if (true? (aget filled i)) (inc sum) sum))))
 
-(defn score [board]
+(defn score [board colour]
   (let [white-flood (flood-fill board white)
         black-flood (flood-fill board black)
         total (* size size)
         overlap (- (+ white-flood black-flood) total)
         white-score (- white-flood overlap)
         black-score (- black-flood overlap)]
-    {white white-score black black-score}))
+    (if (== colour black) black-score white-score)))
 
 ;; --- DEBUGGING
 
