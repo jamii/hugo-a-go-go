@@ -24,11 +24,12 @@
 
 (defn add-value [node ai-colour value]
   (set! (.-count node) (+ (.-count node) 1))
-  (set! (.-sum node) (if (identical? ai-colour (.-colour node))
+  (set! (.-sum node) (if (== ai-colour (.-colour node))
                        (+ (.-sum node) value)
                        (- (.-sum node) value)))
-  (if-let [parent (.-parent node)]
-    (recur parent ai-colour value)))
+  (let [parent (.-parent node)]
+    (when (not (nil? parent))
+      (recur parent ai-colour value))))
 
 (defn expand-leaf [board ai-colour parent colour pos]
   (let [board (board/copy board)]
@@ -67,12 +68,14 @@
     @exploiter))
 
 (defn expand [node ai-colour]
-  (if-let [valid-pos (.pop (.-valids node))]
-    (.push (.-nodes node) (expand-leaf (.-board node) ai-colour node (board/opposite-colour (.-colour node)) valid-pos))
-    (if-let [child (explorer node)]
-      (expand child ai-colour)
-      nil ;; no possible moves - pass
-      )))
+  (let [valid-pos (.pop (.-valids node))]
+    (if (not (nil? valid-pos))
+      (.push (.-nodes node) (expand-leaf (.-board node) ai-colour node (board/opposite-colour (.-colour node)) valid-pos))
+      (let [child (explorer node)]
+        (if (not (nil? child))
+          (expand child ai-colour)
+          nil ;; no possible moves - pass
+          )))))
 
 (defn move-for [board colour n]
   (let [node (hugo-a-go-go.tree/new (board/copy board) colour)]
