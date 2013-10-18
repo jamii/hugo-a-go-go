@@ -134,8 +134,10 @@
 (defn ^boolean eyelike? [board colour pos]
   (aset eyelike-box 0 true)
   (dotimes [i 4]
-    (let [neighbour-pos (neighbour pos i)]
-      (when-not (== colour (get-colour board neighbour-pos))
+    (let [neighbour-pos (neighbour pos i)
+          neighbour-colour (get-colour board neighbour-pos)]
+      (when-not (or (== colour neighbour-colour)
+                    (== grey neighbour-colour))
         (aset eyelike-box 0 false))))
   (aget eyelike-box 0))
 
