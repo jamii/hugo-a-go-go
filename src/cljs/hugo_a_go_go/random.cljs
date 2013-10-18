@@ -21,8 +21,9 @@
     (loop [n n
            colour starting-colour]
       (when (> n 0)
-        (when-let [move (random-move board colour)]
-          (board/place-stone board move colour))
+        (let [move (random-move board colour)]
+          (when (not (nil? move))
+            (board/place-stone board move colour)))
         (recur (dec n) (board/opposite-colour colour))))
     board))
 

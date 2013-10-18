@@ -9,14 +9,14 @@
 
 ;; TODO should track this incrementally in the board
 (defn valids [board colour]
-  (let [valids (object-array 0)]
+  (let [valids (make-array 0)]
     (dotimes [pos board/max-pos]
       (when (board/valid? board colour pos)
         (.push valids pos)))
     valids))
 
 (defn new [board colour]
-  (->Node nil board (board/opposite-colour colour) 0 0 0 (object-array 0) (valids board colour)))
+  (->Node nil board (board/opposite-colour colour) 0 0 0 (make-array 0) (valids board colour)))
 
 (defn uproot [node]
   (set! (.-parent node) nil)
@@ -37,9 +37,9 @@
       (let [future-board (random/with-random-moves board 100 (board/opposite-colour colour))
             value (board/score future-board ai-colour)]
         (add-value parent ai-colour value)
-        (->Node parent board colour pos 1 value (object-array 0) valids)))))
+        (->Node parent board colour pos 1 value (make-array 0) valids)))))
 
-(def explorer-box (object-array 1))
+(def explorer-box (make-array 1))
 
 (defn explorer [node]
   (let [nodes (.-nodes node)]
