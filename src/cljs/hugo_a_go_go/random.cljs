@@ -20,11 +20,17 @@
   (let [board (board/copy board)]
     (loop [n n
            colour starting-colour]
-      (when (> n 0)
-        (let [move (random-move board colour)]
-          (when (not (nil? move))
-            (board/place-stone board move colour)))
-        (recur (dec n) (board/opposite-colour colour))))
+      (let [opposite-colour (board/opposite-colour colour)]
+        (when (> n 0)
+          (let [move (random-move board colour)]
+            (if (not (nil? move))
+              (do (board/place-stone board move colour)
+                  (recur (dec n) opposite-colour))
+              (let [next-move (random-move board opposite-colour)]
+                (if (not (nil? next-move))
+                  (do (board/place-stone board next-move opposite-colour)
+                      (recur (- n 2) colour))
+                  nil)))))))
     board))
 
 (defn random-board [n]
