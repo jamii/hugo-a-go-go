@@ -1,5 +1,5 @@
 (ns hugo-a-go-go.board
-  (:require-macros [hugo-a-go-go.macros :refer [case== get-colour set-colour get-string set-string get-liberties add-liberties]]))
+  (:require-macros [hugo-a-go-go.macros :refer [case== get-colour set-colour get-string set-string get-neighbours add-neighbours get-liberties add-liberties new-string]]))
 
 ;; ....don't judge me.
 ;; This was written in a terrible rush
@@ -16,12 +16,6 @@
 
 ;; --- LAYOUT ---
 
-;; board layout:
-;; pos->colour * max-pos
-;; pos->string * max-pos
-;; next-string * 1
-;; string->liberties * (1024 - 2 * max-pos - 1)
-
 (def size 9)
 (def array-size (+ 2 size))
 (def max-pos (* array-size array-size))
@@ -36,12 +30,6 @@
           2 (- pos 1)
           3 (- pos array-size)))
 
-(defn new-string [board]
-  (let [next-string-ix (+ max-pos max-pos)
-        next-string (aget board next-string-ix)]
-    (aset board next-string-ix (+ next-string 1))
-    next-string))
-
 (def empty-string 0)
 (def grey-string 1)
 
@@ -53,12 +41,19 @@
     (dotimes [i array-size]
       (set-colour board (->pos (dec i) -1) grey)
       (set-string board (->pos (dec i) -1) grey-string)
+      (add-neighbours board (->pos (dec i) 0) 1)
+
       (set-colour board (->pos (dec i) size) grey)
       (set-string board (->pos (dec i) size) grey-string)
+      (add-neighbours board (->pos (dec i) (dec size)) 1)
+
       (set-colour board (->pos -1 (dec i)) grey)
       (set-string board (->pos -1 (dec i)) grey-string)
+      (add-neighbours board (->pos 0 (dec i)) 1)
+
       (set-colour board (->pos size (dec i)) grey)
-      (set-string board (->pos size (dec i)) grey-string))
+      (set-string board (->pos size (dec i)) grey-string)
+      (add-neighbours board (->pos (dec size) (dec i)) 1))
     board))
 
 (defn copy [board]
@@ -70,7 +65,9 @@
   (set-colour board pos empty)
   (set-string board pos empty-string)
   (dotimes [i 4]
-    (add-liberties board (neighbour pos i) 1)))
+    (let [neighbour-pos (neighbour pos i)]
+      (add-neighbours board neighbour-pos -1)
+      (add-liberties board neighbour-pos 1))))
 
 (defn clear-string [board string pos]
   (clear-stone board pos)
@@ -97,6 +94,7 @@
     (set-string board pos string)
     (dotimes [i 4]
       (let [neighbour-pos (neighbour pos i)]
+        (add-neighbours board neighbour-pos 1)
         (case== (get-colour board neighbour-pos)
                 empty (add-liberties board pos 1)
                 colour (do (add-liberties board neighbour-pos -1)
@@ -111,35 +109,32 @@
 (def suicide-box (make-array 1))
 
 (defn ^boolean suicide? [board colour pos]
-  (let [opposite-colour (opposite-colour colour)]
-    (aset suicide-box 0 true)
-    (dotimes [i 4]
-      (let [neighbour-pos (neighbour pos i)]
-        (add-liberties board neighbour-pos -1)))
-    (dotimes [i 4]
-      (let [neighbour-pos (neighbour pos i)]
-        (case== (get-colour board (neighbour pos i))
-                empty (aset suicide-box 0 false)
-                colour (when (> (get-liberties board neighbour-pos) 0)
-                         (aset suicide-box 0 false))
-                opposite-colour (when (== (get-liberties board neighbour-pos) 0)
-                                  (aset suicide-box 0 false)))))
-    (dotimes [i 4]
-      (let [neighbour-pos (neighbour pos i)]
-        (add-liberties board neighbour-pos 1)))
-    (aget suicide-box 0)))
-
-(def eyelike-box (make-array 1))
+  (if (< (get-neighbours board pos) 4)
+    false
+    (let [opposite-colour (opposite-colour colour)]
+      (aset suicide-box 0 true)
+      (dotimes [i 4]
+        (let [neighbour-pos (neighbour pos i)]
+          (add-liberties board neighbour-pos -1)))
+      (dotimes [i 4]
+        (let [neighbour-pos (neighbour pos i)]
+          (case== (get-colour board neighbour-pos)
+                  colour (when (> (get-liberties board neighbour-pos) 0)
+                           (aset suicide-box 0 false))
+                  opposite-colour (when (== (get-liberties board neighbour-pos) 0)
+                                    (aset suicide-box 0 false)))))
+      (dotimes [i 4]
+        (let [neighbour-pos (neighbour pos i)]
+          (add-liberties board neighbour-pos 1)))
+      (aget suicide-box 0))))
 
 (defn ^boolean eyelike? [board colour pos]
-  (aset eyelike-box 0 true)
-  (dotimes [i 4]
-    (let [neighbour-pos (neighbour pos i)
-          neighbour-colour (get-colour board neighbour-pos)]
-      (when-not (or (== colour neighbour-colour)
-                    (== grey neighbour-colour))
-        (aset eyelike-box 0 false))))
-  (aget eyelike-box 0))
+  (if (< (get-neighbours board pos) 4)
+    false
+    (let [above (get-string board (neighbour pos 0))]
+      (and (== above (get-string board (neighbour pos 1)))
+           (== above (get-string board (neighbour pos 2)))
+           (== above (get-string board (neighbour pos 3)))))))
 
 (defn ^boolean empty? [board pos]
   (== empty (get-colour board pos)))

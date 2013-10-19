@@ -2,7 +2,7 @@
   (:require [hugo-a-go-go.board :as board]
             [hugo-a-go-go.random :as random]
             [hugo-a-go-go.tree :as tree])
-  (:require-macros [hugo-a-go-go.macros :refer [case== get-colour set-colour get-string set-string get-liberties add-liberties]]))
+  (:require-macros [hugo-a-go-go.macros :refer [case== get-colour get-string get-liberties get-neighbours]]))
 
 (def line "#000")
 (def background "ffff99")
@@ -131,9 +131,9 @@
                       (char (+ 97 (get-string board (board/->pos x y)))))
                  centre-x centre-y
                  (if (= colour board/black) white black)))
-    (when (and (= :empty colour) (board/suicide? board board/white (board/->pos x y)))
+    (when (and (= board/empty colour) (board/suicide? board board/white (board/->pos x y)))
       (draw-text "X" centre-x centre-y white))
-    (when (and (= :empty colour) (board/suicide? board board/black (board/->pos x y)))
+    (when (and (= board/empty colour) (board/suicide? board board/black (board/->pos x y)))
       (draw-text "X" (- centre-x 20) (+ centre-y 20) black))))
 
 (defn highlight-move [move]
