@@ -9,11 +9,15 @@
 
 ;; TODO should track this incrementally in the board
 (defn valids [board colour]
-  (let [valids (make-array 0)]
-    (dotimes [pos board/max-pos]
-      (when (board/valid? board colour pos)
-        (.push valids pos)))
-    valids))
+  (let [valids (js/Uint8Array. board/max-pos)]
+    (loop [pos 0
+           ix 0]
+      (if (< pos board/max-pos)
+        (if (board/valid? board colour pos)
+          (do (aset valids ix pos)
+              (recur (inc pos) (inc ix)))
+          (recur (inc pos) ix))
+        valids))))
 
 (defn new [board colour]
   (->Node nil board (board/opposite-colour colour) 0 0 0 (make-array 0) (valids board colour)))
@@ -67,8 +71,18 @@
           (reset! exploiter child))))
     @exploiter))
 
+(defn pop [valids]
+  (if (== 0 (aget valids 0))
+    nil
+    (loop [ix 1]
+      (if (== 0 (aget valids ix))
+        (let [result (aget valids (dec ix))]
+          (aset valids (dec ix) 0)
+          result)
+        (recur (inc ix))))))
+
 (defn expand [node ai-colour]
-  (let [valid-pos (.pop (.-valids node))]
+  (let [valid-pos (pop (.-valids node))]
     (if (not (nil? valid-pos))
       (.push (.-nodes node) (expand-leaf (.-board node) ai-colour node (board/opposite-colour (.-colour node)) valid-pos))
       (let [child (explorer node)]
