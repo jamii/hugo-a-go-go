@@ -1,5 +1,5 @@
 (ns hugo-a-go-go.board
-  (:require-macros [hugo-a-go-go.macros :refer [case== get-colour set-colour get-string set-string get-neighbours add-neighbours get-liberties add-liberties new-string]]))
+  (:require-macros [hugo-a-go-go.macros :refer [case== neighbour foreach-neighbour get-colour set-colour get-string set-string get-neighbours add-neighbours get-liberties add-liberties new-string]]))
 
 ;; ....don't judge me.
 ;; This was written in a terrible rush
@@ -22,13 +22,6 @@
 
 (defn ->pos [x y]
   (+ 1 x (* array-size (+ 1 y))))
-
-(defn neighbour [pos i]
-  (case== i
-          0 (+ pos 1)
-          1 (+ pos array-size)
-          2 (- pos 1)
-          3 (- pos array-size)))
 
 (def empty-string 0)
 (def grey-string 1)
@@ -64,24 +57,21 @@
 (defn clear-stone [board pos]
   (set-colour board pos empty)
   (set-string board pos empty-string)
-  (dotimes [i 4]
-    (let [neighbour-pos (neighbour pos i)]
-      (add-neighbours board neighbour-pos -1)
-      (add-liberties board neighbour-pos 1))))
+  (foreach-neighbour pos neighbour-pos
+                     (add-neighbours board neighbour-pos -1)
+                     (add-liberties board neighbour-pos 1)))
 
 (defn clear-string [board string pos]
   (clear-stone board pos)
-  (dotimes [i 4]
-    (let [neighbour-pos (neighbour pos i)]
-      (when (== string (get-string board neighbour-pos))
-        (clear-string board string neighbour-pos)))))
+  (foreach-neighbour pos neighbour-pos
+                     (when (== string (get-string board neighbour-pos))
+                       (clear-string board string neighbour-pos))))
 
 (defn rename-string [board from-string to-string pos]
   (when (== from-string (get-string board pos))
     (set-string board pos to-string)
-    (dotimes [i 4]
-      (let [neighbour-pos (neighbour pos i)]
-        (rename-string board from-string to-string neighbour-pos)))))
+    (foreach-neighbour pos neighbour-pos
+                       (rename-string board from-string to-string neighbour-pos))))
 
 (defn join-strings [board pos-a pos-b]
   (add-liberties board pos-b (get-liberties board pos-a))
@@ -92,17 +82,16 @@
         opposite-colour (opposite-colour colour)]
     (set-colour board pos colour)
     (set-string board pos string)
-    (dotimes [i 4]
-      (let [neighbour-pos (neighbour pos i)]
-        (add-neighbours board neighbour-pos 1)
-        (case== (get-colour board neighbour-pos)
-                empty (add-liberties board pos 1)
-                colour (do (add-liberties board neighbour-pos -1)
-                           (when (not (== (get-string board pos) (get-string board neighbour-pos)))
-                             (join-strings board pos neighbour-pos)))
-                opposite-colour (do (add-liberties board neighbour-pos -1)
-                                    (when (== 0 (get-liberties board neighbour-pos))
-                                      (clear-string board (get-string board neighbour-pos) neighbour-pos))))))))
+    (foreach-neighbour pos neighbour-pos
+                       (add-neighbours board neighbour-pos 1)
+                       (case== (get-colour board neighbour-pos)
+                               empty (add-liberties board pos 1)
+                               colour (do (add-liberties board neighbour-pos -1)
+                                          (when (not (== (get-string board pos) (get-string board neighbour-pos)))
+                                            (join-strings board pos neighbour-pos)))
+                               opposite-colour (do (add-liberties board neighbour-pos -1)
+                                                   (when (== 0 (get-liberties board neighbour-pos))
+                                                     (clear-string board (get-string board neighbour-pos) neighbour-pos)))))))
 
 ;; --- INFO ---
 
@@ -113,19 +102,19 @@
     false
     (let [opposite-colour (opposite-colour colour)]
       (aset suicide-box 0 true)
-      (dotimes [i 4]
-        (let [neighbour-pos (neighbour pos i)]
-          (add-liberties board neighbour-pos -1)))
-      (dotimes [i 4]
-        (let [neighbour-pos (neighbour pos i)]
-          (case== (get-colour board neighbour-pos)
-                  colour (when (> (get-liberties board neighbour-pos) 0)
-                           (aset suicide-box 0 false))
-                  opposite-colour (when (== (get-liberties board neighbour-pos) 0)
-                                    (aset suicide-box 0 false)))))
-      (dotimes [i 4]
-        (let [neighbour-pos (neighbour pos i)]
-          (add-liberties board neighbour-pos 1)))
+      (foreach-neighbour pos neighbour-pos
+
+                         (add-liberties board neighbour-pos -1))
+      (foreach-neighbour pos neighbour-pos
+
+                         (case== (get-colour board neighbour-pos)
+                                 colour (when (> (get-liberties board neighbour-pos) 0)
+                                          (aset suicide-box 0 false))
+                                 opposite-colour (when (== (get-liberties board neighbour-pos) 0)
+                                                   (aset suicide-box 0 false))))
+      (foreach-neighbour pos neighbour-pos
+
+                         (add-liberties board neighbour-pos 1))
       (aget suicide-box 0))))
 
 (defn ^boolean eyelike? [board colour pos]
@@ -149,16 +138,16 @@
   (when (and (undefined? (aget filled pos))
              (empty? board pos))
     (aset filled pos true)
-    (dotimes [i 4]
-      (flood-fill-around board filled (neighbour pos i)))))
+    (foreach-neighbour pos neighbour-pos
+                       (flood-fill-around board filled neighbour-pos))))
 
 (defn flood-fill [board colour]
   (let [filled (make-array max-pos)]
     (dotimes [pos max-pos]
       (when (== colour (get-colour board pos))
         (aset filled pos true)
-        (dotimes [i 4]
-          (flood-fill-around board filled (neighbour pos i)))))
+        (foreach-neighbour pos neighbour-pos
+                           (flood-fill-around board filled neighbour-pos))))
     filled))
 
 (defn score [board colour]

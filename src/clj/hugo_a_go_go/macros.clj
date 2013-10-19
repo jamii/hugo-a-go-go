@@ -15,6 +15,23 @@
         ~@(when (odd? (count cases&bodies))
             [true (last cases&bodies)])))))
 
+(defmacro neighbour [pos i]
+  (case i
+    0 `(+ ~pos 1)
+    1 `(+ ~pos ~array-size)
+    2 `(- ~pos 1)
+    3 `(- ~pos ~array-size)))
+
+(defmacro foreach-neighbour [pos neighbour-pos & body]
+  `(do
+     (let [~neighbour-pos (neighbour ~pos 0)]
+       ~@body)
+     (let [~neighbour-pos (neighbour ~pos 1)]
+       ~@body)
+     (let [~neighbour-pos (neighbour ~pos 2)]
+       ~@body)
+     (let [~neighbour-pos (neighbour ~pos 3)]
+       ~@body)))
 
 ;; board layout:
 ;; pos->colour * max-pos
