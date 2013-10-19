@@ -5,22 +5,18 @@
 ;; TODO value and min/max is probably wrong
 ;; TODO hashes for detecting repeated positions
 
-(defrecord Node [parent board colour pos count sum nodes valids])
+(defrecord Node [parent board colour pos count sum nodes last-valid])
 
-;; TODO should track this incrementally in the board
-(defn valids [board colour]
-  (let [valids (js/Uint8Array. board/max-pos)]
-    (loop [pos 0
-           ix 0]
-      (if (< pos board/max-pos)
-        (if (board/valid? board colour pos)
-          (do (aset valids ix pos)
-              (recur (inc pos) (inc ix)))
-          (recur (inc pos) ix))
-        valids))))
+(defn next-valid [board colour last-valid]
+  (loop [pos (inc last-valid)]
+    (if (< pos board/max-pos)
+      (if (board/valid? board colour pos)
+        pos
+        (recur (inc pos)))
+      pos)))
 
 (defn new [board colour]
-  (->Node nil board (board/opposite-colour colour) 0 0 0 (make-array 0) (valids board colour)))
+  (->Node nil board (board/opposite-colour colour) 0 0 0 (make-array 0) board/array-size))
 
 (defn uproot [node]
   (set! (.-parent node) nil)
@@ -38,11 +34,10 @@
 (defn expand-leaf [board ai-colour parent colour pos]
   (let [board (board/copy board)]
     (board/place-stone board pos colour)
-    (let [valids (valids board (board/opposite-colour colour))]
-      (let [future-board (random/with-random-moves board 100 (board/opposite-colour colour))
-            value (board/score future-board ai-colour)]
-        (add-value parent ai-colour value)
-        (->Node parent board colour pos 1 value (make-array 0) valids)))))
+    (let [future-board (random/with-random-moves board 100 (board/opposite-colour colour))
+          value (board/score future-board ai-colour)]
+      (add-value parent ai-colour value)
+      (->Node parent board colour pos 1 value (make-array 0) board/array-size))))
 
 (def explorer-box (make-array 1))
 
@@ -71,20 +66,11 @@
           (reset! exploiter child))))
     @exploiter))
 
-(defn pop [valids]
-  (if (== 0 (aget valids 0))
-    nil
-    (loop [ix 1]
-      (if (== 0 (aget valids ix))
-        (let [result (aget valids (dec ix))]
-          (aset valids (dec ix) 0)
-          result)
-        (recur (inc ix))))))
-
 (defn expand [node ai-colour]
-  (let [valid-pos (pop (.-valids node))]
-    (if (not (nil? valid-pos))
-      (.push (.-nodes node) (expand-leaf (.-board node) ai-colour node (board/opposite-colour (.-colour node)) valid-pos))
+  (let [next-valid (next-valid (.-board node) (.-colour node) (.-last-valid node))]
+    (if (< next-valid board/max-pos)
+      (do (set! (.-last-valid node) next-valid)
+          (.push (.-nodes node) (expand-leaf (.-board node) ai-colour node (board/opposite-colour (.-colour node)) next-valid)))
       (let [child (explorer node)]
         (if (not (nil? child))
           (expand child ai-colour)
