@@ -5,7 +5,7 @@
 ;; TODO value and min/max is probably wrong
 ;; TODO hashes for detecting repeated positions
 
-(defrecord Node [parent board colour pos count sum nodes last-valid])
+(defrecord Node [parent board colour pos count sum nodes])
 
 (defn next-valid [board colour last-valid]
   (loop [pos (inc last-valid)]
@@ -16,28 +16,46 @@
       pos)))
 
 (defn new [board colour]
-  (->Node nil board (board/opposite-colour colour) 0 0 0 (make-array 0) board/array-size))
+  (->Node nil board (board/opposite-colour colour) 0 0 0 nil))
 
 (defn uproot [node]
   (set! (.-parent node) nil)
   (set! (.-pos node) 0))
 
-(defn add-value [node ai-colour value]
-  (set! (.-count node) (+ (.-count node) 1))
+(defn add-value [node ai-colour sum count]
+  (set! (.-count node) (+ (.-count node) count))
   (set! (.-sum node) (if (== ai-colour (.-colour node))
-                       (+ (.-sum node) value)
-                       (- (.-sum node) value)))
+                       (+ (.-sum node) sum)
+                       (- (.-sum node) sum)))
   (let [parent (.-parent node)]
     (when (not (nil? parent))
-      (recur parent ai-colour value))))
+      (recur parent ai-colour sum count))))
 
-(defn expand-leaf [board ai-colour parent colour pos]
+(defn leaf [board ai-colour parent colour pos]
   (let [board (board/copy board)]
     (board/place-stone board pos colour)
     (let [future-board (random/with-random-moves board 100 (board/opposite-colour colour))
           value (board/score future-board ai-colour)]
-      (add-value parent ai-colour value)
-      (->Node parent board colour pos 1 value (make-array 0) board/array-size))))
+      (->Node parent board colour pos 1 value nil))))
+
+(def total-count (object-array [0]))
+
+(defn expand-leaf [node ai-colour]
+  (let [nodes (make-array 0)
+        board (.-board node)
+        opposite-colour (board/opposite-colour (.-colour node))]
+    (loop [pos 0
+           sum 0
+           count 0]
+      (if (< pos board/max-pos)
+        (if (board/valid? board opposite-colour pos)
+          (let [leaf (leaf board ai-colour node opposite-colour pos)]
+            (.push nodes leaf)
+            (recur (inc pos) (+ sum (.-sum leaf)) (inc count)))
+          (recur (inc pos) sum count))
+        (do (aset total-count 0 (+ (aget total-count 0) count))
+            (add-value node ai-colour sum count))))
+    (set! (.-nodes node) nodes)))
 
 (def explorer-box (make-array 1))
 
@@ -67,10 +85,9 @@
     @exploiter))
 
 (defn expand [node ai-colour]
-  (let [next-valid (next-valid (.-board node) (.-colour node) (.-last-valid node))]
-    (if (< next-valid board/max-pos)
-      (do (set! (.-last-valid node) next-valid)
-          (.push (.-nodes node) (expand-leaf (.-board node) ai-colour node (board/opposite-colour (.-colour node)) next-valid)))
+  (let [nodes (.-nodes node)]
+    (if (nil? nodes)
+      (expand-leaf node ai-colour)
       (let [child (explorer node)]
         (if (not (nil? child))
           (expand child ai-colour)

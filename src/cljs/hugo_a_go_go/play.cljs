@@ -25,9 +25,11 @@
       (hugo-a-go-go.client/draw-subtitle "Thinking...")
       (js/window.setTimeout
        (fn []
-         (let [_ (js/console.time "ai-move")
-               ai-move (tree/move-for (:board @state) board/white 50000)
-               _ (js/console.timeEnd "ai-move")
+         (let [_ (js/console.time "time spent thinking")
+               ai-move (tree/move-for (:board @state) board/white 1000)
+               _ (js/console.timeEnd "time spent thinking")
+               _ (js/console.log (str "games played") (aget tree/total-count 0))
+               _ (aset tree/total-count 0 0)
                x (dec (mod ai-move board/array-size))
                y (dec (quot ai-move board/array-size))]
            (log [x y])
