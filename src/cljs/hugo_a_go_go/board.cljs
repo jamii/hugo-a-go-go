@@ -135,17 +135,17 @@
 ;; --- SCORING ---
 
 (defn flood-fill-around [board filled pos]
-  (when (and (undefined? (aget filled pos))
+  (when (and (== 0 (aget filled pos))
              (empty? board pos))
-    (aset filled pos true)
+    (aset filled pos 1)
     (foreach-neighbour pos neighbour-pos
                        (flood-fill-around board filled neighbour-pos))))
 
 (defn flood-fill [board colour]
-  (let [filled (make-array max-pos)]
+  (let [filled (js/Int8Array. max-pos)]
     (dotimes [pos max-pos]
       (when (== colour (get-colour board pos))
-        (aset filled pos true)
+        (aset filled pos 1)
         (foreach-neighbour pos neighbour-pos
                            (flood-fill-around board filled neighbour-pos))))
     filled))
@@ -154,7 +154,7 @@
   (let [colour-filled (flood-fill board colour)
         opposite-colour-filled (flood-fill board (opposite-colour colour))]
     (areduce colour-filled i sum 0
-             (if (and (true? (aget colour-filled i)) (undefined? (aget opposite-colour-filled i)))
+             (if (and (== 1 (aget colour-filled i)) (== 0 (aget opposite-colour-filled i)))
                (inc sum)
                sum))))
 
